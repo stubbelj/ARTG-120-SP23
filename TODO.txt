@@ -1,0 +1,3 @@
+investigate why collisions aren't triggering
+
+add a change state function to handle disabling/enabling colliders
