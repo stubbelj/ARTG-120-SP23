@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager inst = null;
     public System.Random rand = new System.Random();
+    GameObject restartButton;
     public GameObject playerPrefab;
     public Transform[] playerSpawnPoints = new Transform[2];
     public GameObject[] scorePoints = new GameObject[2];
@@ -27,6 +29,8 @@ public class GameManager : MonoBehaviour
         players[0].Init(false, 0);
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
         players[1].Init(true, 1);
+        
+        restartButton = GameObject.Find("Canvas").transform.Find("RestartButton").gameObject;
     }
 
     public void AwardPoint(bool playerNum) {
@@ -38,10 +42,14 @@ public class GameManager : MonoBehaviour
                 scorePoints[0].GetComponent<SpriteRenderer>().sprite = scoreSprites[1];
             } else if (scores[0] == 2) {
                 scorePoints[0].GetComponent<SpriteRenderer>().sprite = scoreSprites[2];
+                restartButton.SetActive(true);
             }
             scores[0]++;
             players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
             players[1].Init(true, 1);
+            Destroy(players[0].gameObject);
+            players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
+            players[0].Init(false, 0);
         } else if (playerNum && !awardingPoint[1]){
             StartCoroutine(PointTimer2());
             if (scores[1] == 0) {
@@ -50,10 +58,14 @@ public class GameManager : MonoBehaviour
                 scorePoints[1].GetComponent<SpriteRenderer>().sprite = scoreSprites[1];
             } else if (scores[1] == 2) {
                 scorePoints[1].GetComponent<SpriteRenderer>().sprite = scoreSprites[2];
+                restartButton.SetActive(true);
             }
             scores[1]++;
             players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
             players[0].Init(false, 0);
+            Destroy(players[1].gameObject);
+            players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
+            players[1].Init(true, 1);
         }
     }
 
@@ -66,5 +78,9 @@ public class GameManager : MonoBehaviour
         awardingPoint[1] = true;
         yield return new WaitForSeconds(0.1f);
         awardingPoint[1] = false;
+    }
+
+    public void EndGame() {
+        SceneManager.LoadScene("LucaScene");
     }
 }

@@ -5,12 +5,13 @@ using System.Linq;
 
 public class Player : MonoBehaviour
 {
-    Vector2 moveSpeed = new Vector2(0.3f, 0.3f);
-    Vector2 maxSpeed = new Vector2(10f, 10f);
+    Vector2 moveSpeed = new Vector2(100, 100);
+    Vector2 maxSpeed = new Vector2(15f, 15f);
     float jumpForce = 1100f;
     bool isGrounded = false;
     int jumps = 0;
     bool playerNumber;
+    float percent = 0;
 
     string actionInput = null;
     string dirInput = null;
@@ -33,8 +34,8 @@ public class Player : MonoBehaviour
             {"s", "down"},
             {"a", "left"},
             {"d", "right"},
-            {"g", "attack"},
-            {"space", "jump"},
+            {"c", "attack"},
+            {"v", "jump"},
             {"h", "block"}
         },
         new Dictionary<string, string>{
@@ -42,8 +43,8 @@ public class Player : MonoBehaviour
             {"down", "down"},
             {"left", "left"},
             {"right", "right"},
-            {"i", "attack"},
-            {"o", "jump"},
+            {"[", "attack"},
+            {"]", "jump"},
             {"p", "block"}
         }
     };
@@ -178,7 +179,11 @@ public class Player : MonoBehaviour
             //player is walking
             if ((dirInput == "left" || dirInput == "right") && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 currState = "walking";
-                rb.velocity += (Mathf.Abs(rb.velocity.x) < maxSpeed.x ? 1 : 0) * new Vector2((isGrounded ? 1 : 0.5f) * (dirInput == "right" ? 1 : -1) * moveSpeed.x, 0);
+                float turnAroundFactor = 1;
+                if ((dirInput == "right" && rb.velocity.x < 0) || (dirInput == "left" && rb.velocity.x > 0)) {
+                    turnAroundFactor *= 2;
+                }
+                rb.velocity += (Mathf.Abs(rb.velocity.x) < maxSpeed.x ? 1 : 0) * new Vector2((isGrounded ? 1 : 0.5f) * (dirInput == "right" ? 1 : -1) * moveSpeed.x * turnAroundFactor * Time.deltaTime, 0);
                 transform.Find("WalkColliders").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 ChangeAnimationState("test_walk");
                 if ((sr.flipX && dirInput == "left") || (!sr.flipX && dirInput == "right")) {
@@ -253,8 +258,8 @@ public class Player : MonoBehaviour
     public void TakeDamage(AttackData aD, Vector3 contactPoint) {
         if ((!damagedBy.Contains(aD.damageInst)) && (aD.multiHit || !attackedBy.Contains(aD.attackId))) {
             Vector3 forceVec = ((Vector3)transform.position - contactPoint).normalized;
-            forceVec *= aD.damage * 250;
-            print(forceVec.x + ", " + forceVec.y);
+            percent += aD.damage;
+            forceVec *= aD.damage * percent * 10;
             rb.AddForce(forceVec);
         }
         damagedBy.Add(aD.damageInst);
