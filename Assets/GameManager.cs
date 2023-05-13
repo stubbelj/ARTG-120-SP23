@@ -15,7 +15,7 @@ public class GameManager : MonoBehaviour
     public int[] scores = new int[]{0, 0};
     bool[] awardingPoint = new bool[]{false, false};
 
-    Player[] players = new Player[2];
+    public Player[] players = new Player[2];
     // Start is called before the first frame update
     void Awake()
     {
