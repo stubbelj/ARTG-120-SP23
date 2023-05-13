@@ -2,20 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager inst = null;
     public System.Random rand = new System.Random();
-    GameObject restartButton;
     public GameObject playerPrefab;
     public Transform[] playerSpawnPoints = new Transform[2];
     public GameObject[] scorePoints = new GameObject[2];
     public Sprite[] scoreSprites = new Sprite[3];
     public int[] scores = new int[]{0, 0};
-    bool[] awardingPoint = new bool[]{false, false};
-
+    public GameObject[] percentTexts;
     public Player[] players = new Player[2];
+
+    bool[] awardingPoint = new bool[]{false, false};
+    GameObject restartButton;
     // Start is called before the first frame update
     void Awake()
     {
@@ -26,9 +28,9 @@ public class GameManager : MonoBehaviour
         }
 
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
-        players[0].Init(false, 0);
+        players[0].Init(false, 0, percentTexts[0].GetComponent<TMP_Text>());
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-        players[1].Init(true, 1);
+        players[1].Init(true, 1, percentTexts[1].GetComponent<TMP_Text>());
         
         restartButton = GameObject.Find("Canvas").transform.Find("RestartButton").gameObject;
     }
@@ -46,10 +48,10 @@ public class GameManager : MonoBehaviour
             }
             scores[0]++;
             players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-            players[1].Init(true, 1);
+            players[1].Init(true, 1, percentTexts[1].GetComponent<TMP_Text>());
             Destroy(players[0].gameObject);
             players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
-            players[0].Init(false, 0);
+            players[0].Init(false, 0, percentTexts[0].GetComponent<TMP_Text>());
         } else if (playerNum && !awardingPoint[1]){
             StartCoroutine(PointTimer2());
             if (scores[1] == 0) {
@@ -62,10 +64,10 @@ public class GameManager : MonoBehaviour
             }
             scores[1]++;
             players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
-            players[0].Init(false, 0);
+            players[0].Init(false, 0, percentTexts[0].GetComponent<TMP_Text>());
             Destroy(players[1].gameObject);
             players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-            players[1].Init(true, 1);
+            players[1].Init(true, 1, percentTexts[1].GetComponent<TMP_Text>());
         }
     }
 

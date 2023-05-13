@@ -17,7 +17,7 @@ public class Hitbox : MonoBehaviour
         }
         parentPlayer = curr.GetComponent<Player>();
         GetComponent<BoxCollider2D>().enabled = false;
-        blockHitData = new AttackData(0, false, parentPlayer, AttackData.attackIdFlow++);
+        blockHitData = new AttackData(0, 10.2f, false, parentPlayer, AttackData.attackIdFlow++);
     }
 
     void OnTriggerEnter2D(Collider2D col) {

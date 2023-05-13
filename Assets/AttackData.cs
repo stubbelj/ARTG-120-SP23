@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class AttackData {
     public float damage;
+    public float hitStun;
     public bool multiHit;
     Player attackSource;
     public int attackId;
@@ -13,8 +14,9 @@ public class AttackData {
     //restricts attacks to only hitting once per hitbox
     public static int damageInstFlow = 0;
 
-    public AttackData(float newDamage, bool newMultiHit, Player newAttackSource, int newAttackId) {
+    public AttackData(float newDamage, float newHitStun, bool newMultiHit, Player newAttackSource, int newAttackId) {
         damage = newDamage;
+        hitStun = newHitStun;
         multiHit = newMultiHit;
         attackSource = newAttackSource;
         attackId = newAttackId;

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using TMPro;
 
 public class Player : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class Player : MonoBehaviour
     bool playerNumber;
     float percent = 0;
     bool stunned = false;
+    TMP_Text percentText;
 
     string actionInput = null;
     string dirInput = null;
@@ -144,11 +146,23 @@ public class Player : MonoBehaviour
                 }
             }
             //keep one of the dir inputs - they might still be colliding
-            //probably doesn't matter if some inputs hold precedence, but i selected the input to keep randomly anyway
+            /*probably doesn't matter if some inputs hold precedence, but i selected the input to keep randomly anyway
             List<string> inputsToRemove = new List<string>{"up", "down", "left", "right"};
             inputsToRemove.RemoveAt(gameManager.rand.Next(0, 4));
             foreach (string inputName in inputsToRemove) {
                 inputs[0][inputName] = false;
+            }*/
+            List<string> inputsToRemove = new List<string>{"up", "down", "left", "right"};
+            if (inputs[0]["up"]) {
+                inputs[0]["down"] = inputs[0]["left"] = inputs[0]["right"] = false;
+            }
+            else if (inputs[0]["down"]) {
+                inputs[0]["up"] = inputs[0]["left"] = inputs[0]["right"] = false;
+            }
+            else if (inputs[0]["left"]) {
+                inputs[0]["down"] = inputs[0]["up"] = inputs[0]["right"] = false;
+            } else {
+                inputs[0]["down"] = inputs[0]["left"] = inputs[0]["up"] = false;
             }
         }
 
@@ -185,7 +199,7 @@ public class Player : MonoBehaviour
         /*have the player perform actions based on the (reduced) input*/
         if (actionInput == null) {
             //player is walking
-            if ((dirInput == "left" || dirInput == "right") && (new string[]{null, "idle", "walking", "hurt"}.Contains(currState))) {
+            if ((dirInput == "left" || dirInput == "right") && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 currState = "walking";
                 float turnAroundFactor = 1;
                 if ((dirInput == "right" && rb.velocity.x < 0) || (dirInput == "left" && rb.velocity.x > 0)) {
@@ -200,28 +214,28 @@ public class Player : MonoBehaviour
                     foreach(Transform colliderParent in transform) {
                         foreach(Transform frameParent in colliderParent) {
                             foreach(Transform box in frameParent) {
-                                box.localPosition = new Vector3(-box.localPosition.x, box.localPosition.y, 0);
+                                box.GetComponent<BoxCollider2D>().offset = new Vector2(-box.GetComponent<BoxCollider2D>().offset.x, box.GetComponent<BoxCollider2D>().offset.y);
                             }
                         }
                     }
                 }
-            } else if (dirInput == "down" && (new string[]{null, "idle", "walking", "hurt"}.Contains(currState))) {
+            } else if (dirInput == "down" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 //crouch maybe? no animation right now, so just go into idle
                 transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
-            } else if (dirInput == "up" && (new string[]{null, "idle", "walking", "hurt"}.Contains(currState))) {
+            } else if (dirInput == "up" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 //look up. no animation right now, so just go into idle
                 transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
-            } else if (dirInput == null && (new string[]{null, "idle", "walking", "hurt"}.Contains(currState))) {
+            } else if (dirInput == null && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
             }
 
-        } else if (actionInput == "attack" && new string[]{null, "idle", "walking", "hurt"}.Contains(currState)) {
+        } else if (actionInput == "attack" && new string[]{null, "idle", "walking"}.Contains(currState)) {
             if (isGrounded) {
                 if (dirInput == "left" || dirInput == "right") {
                     //side and neutral attacks are the same right now
@@ -252,7 +266,7 @@ public class Player : MonoBehaviour
                 isGrounded = false;
                 jumps--;
             }
-        } else if (actionInput == "block" && new string[]{null, "idle", "walking", "hurt"}.Contains(currState)) {
+        } else if (actionInput == "block" && new string[]{null, "idle", "walking"}.Contains(currState)) {
             currActionCoroutine = StartCoroutine(Block());
         }
     }
@@ -405,28 +419,29 @@ public class Player : MonoBehaviour
             //Vector3 forceVec = ((Vector3)transform.position - contactPoint).normalized;
             Vector3 forceVec = ((Vector3)transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position).normalized;
             percent += aD.damage;
+            percentText.text = percent.ToString();
             forceVec *= Mathf.Pow(aD.damage * percent, 1.3f);
-            StartCoroutine(HitStunAndLaunch(0.1f, 0.1f, forceVec));
+            StartCoroutine(HitStunAndLaunch(0.1f, aD, forceVec));
         }
         damagedBy.Add(aD.damageInst);
         attackedBy.Add(aD.attackId);
         StartCoroutine(RefreshInvulnById(aD.damageInst, aD.attackId));
     }
 
-    public IEnumerator HitStunAndLaunch(float mag, float time, Vector3 forceVec) {
+    public IEnumerator HitStunAndLaunch(float mag, AttackData ad, Vector3 forceVec) {
         //called when you take damage, makes you get stunned, shake a lil and then get launched
         Vector3 originPos = transform.position;
         //forcefully change player state to be stunned
         stunned = true;
-        ChangeAnimationState("hurt");
         currState = "hurt";
+        ChangeAnimationState("hurt");
         if (currActionCoroutine != null) {
             StopCoroutine(currActionCoroutine);
             currActionCoroutine = null;
         }
-        while(time > 0) {
+        while(ad.hitStun > 0) {
             transform.position = new Vector3(originPos.x + (gameManager.rand.Next(-1, 1) * mag), originPos.y + (gameManager.rand.Next(-1, 1) * mag), originPos.z);
-            time -= Time.deltaTime;
+            ad.hitStun -= Time.deltaTime;
             yield return new WaitForSeconds(Time.deltaTime);
         }
         rb.velocity = Vector3.zero;
@@ -446,23 +461,23 @@ public class Player : MonoBehaviour
         //initializes hitboxes with data about their respective attacks
         Transform sideAttack = transform.Find("SideAttackColliders");
         int sideAttackId = AttackData.attackIdFlow++;
-        sideAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, true, this, sideAttackId);
-        sideAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, true, this, sideAttackId);
+        sideAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, sideAttackId);
+        sideAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, sideAttackId);
 
         Transform upAttack = transform.Find("UpAttackColliders");
         int upAttackId = AttackData.attackIdFlow++;
-        upAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, true, this, upAttackId);
-        upAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, true, this, upAttackId);
+        upAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, upAttackId);
+        upAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, upAttackId);
 
         Transform upAirAttack = transform.Find("UpAirAttackColliders");
         int upAirAttackId = AttackData.attackIdFlow++;
-        upAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, true, this, upAirAttackId);
-        upAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, true, this, upAirAttackId);
+        upAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, upAirAttackId);
+        upAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, upAirAttackId);
 
         Transform downAirAttack = transform.Find("DownAirAttackColliders");
         int downAirAttackId = AttackData.attackIdFlow++;
-        downAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, true, this, downAirAttackId);
-        downAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, true, this, downAirAttackId);
+        downAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, downAirAttackId);
+        downAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, downAirAttackId);
     }
 
     IEnumerator ForceOverTime(Vector3 force, float time) {
@@ -474,10 +489,11 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Init(bool newPlayerNumber, int newControlScheme) {
+    public void Init(bool newPlayerNumber, int newControlScheme, TMP_Text newPercentText) {
         //initializer bc monobehaviours don't really get constructors and Start() isn't safe
         playerNumber = newPlayerNumber;
         controlScheme = controlSchemeData[newControlScheme];
+        percentText = newPercentText;
     }
 
     void Die() {
