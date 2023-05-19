@@ -7,6 +7,7 @@ public class Hitbox : MonoBehaviour
     public Player parentPlayer;
     public AttackData attackData;
     AttackData blockHitData;
+    bool throwing = false;
     //loaded by Player on Awake()
 
     void Awake()
@@ -17,29 +18,55 @@ public class Hitbox : MonoBehaviour
         }
         parentPlayer = curr.GetComponent<Player>();
         GetComponent<BoxCollider2D>().enabled = false;
-        blockHitData = new AttackData(0, 10.2f, false, parentPlayer, AttackData.attackIdFlow++);
+        blockHitData = new AttackData(0, 2f, false, parentPlayer, AttackData.attackIdFlow++);
     }
 
     void OnTriggerEnter2D(Collider2D col) {
-        if (col.gameObject.tag == "Hurtbox") {
-            if (col.gameObject.GetComponent<Hurtbox>().parentPlayer != parentPlayer.gameObject) {
-                col.gameObject.GetComponent<Hurtbox>().parentPlayer.TakeDamage(attackData, col.ClosestPoint(transform.position));
+        if (gameObject.tag == "GrabHitbox") {
+            if (col.gameObject.tag == "BlockHurtbox" || col.gameObject.tag == "Hurtbox") {
+                if (!throwing) {
+                    col.gameObject.GetComponent<Hurtbox>().parentPlayer.BeginThrown();
+                    StartCoroutine(parentPlayer.Throw());
+                    throwing = true;
+                    StartCoroutine(ThrowingReset());
+                }
             }
-        } else if (col.gameObject.tag == "BlockHurtbox") {
-            parentPlayer.TakeDamage(blockHitData, col.ClosestPoint(transform.position));
-            col.gameObject.GetComponent<Hurtbox>().parentPlayer.EndBlock();
+        } else {
+            if (col.gameObject.tag == "BlockHurtbox") {
+                parentPlayer.TakeDamage(blockHitData, col.ClosestPoint(transform.position));
+                col.gameObject.GetComponent<Hurtbox>().parentPlayer.EndBlock();
+            } else if (col.gameObject.tag == "Hurtbox") {
+                if (col.gameObject.GetComponent<Hurtbox>().parentPlayer != parentPlayer.gameObject) {
+                    col.gameObject.GetComponent<Hurtbox>().parentPlayer.TakeDamage(attackData, col.ClosestPoint(transform.position));
+                }
+            }
         }
     }
 
     void OnTriggerStay2D(Collider2D col) {
-        if (col.gameObject.tag == "Hurtbox") {
-            if (col.gameObject.GetComponent<Hurtbox>().parentPlayer != parentPlayer.gameObject) {
-                col.gameObject.GetComponent<Hurtbox>().parentPlayer.TakeDamage(attackData, col.ClosestPoint(transform.position));
-                col.gameObject.GetComponent<Hurtbox>().parentPlayer.TakeDamage(attackData, col.ClosestPoint(transform.position));
+        if (gameObject.tag == "GrabHitbox") {
+            if (col.gameObject.tag == "BlockHurtbox" || col.gameObject.tag == "Hurtbox") {
+                if (!throwing) {
+                    col.gameObject.GetComponent<Hurtbox>().parentPlayer.BeginThrown();
+                    StartCoroutine(parentPlayer.Throw());
+                    throwing = true;
+                    StartCoroutine(ThrowingReset());
+                }
             }
-        } else if (col.gameObject.tag == "BlockHurtbox") {
-            parentPlayer.TakeDamage(blockHitData, col.ClosestPoint(transform.position));
-            col.gameObject.GetComponent<Hurtbox>().parentPlayer.EndBlock();
+        } else {
+            if (col.gameObject.tag == "BlockHurtbox") {
+                parentPlayer.TakeDamage(blockHitData, col.ClosestPoint(transform.position));
+                col.gameObject.GetComponent<Hurtbox>().parentPlayer.EndBlock();
+            } else if (col.gameObject.tag == "Hurtbox") {
+                if (col.gameObject.GetComponent<Hurtbox>().parentPlayer != parentPlayer.gameObject) {
+                    col.gameObject.GetComponent<Hurtbox>().parentPlayer.TakeDamage(attackData, col.ClosestPoint(transform.position));
+                }
+            }
         }
+    }
+
+    IEnumerator ThrowingReset() {
+        yield return new WaitForSeconds(0.3f);
+        throwing = false;
     }
 }

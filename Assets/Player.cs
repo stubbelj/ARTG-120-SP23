@@ -38,18 +38,20 @@ public class Player : MonoBehaviour
             {"s", "down"},
             {"a", "left"},
             {"d", "right"},
-            {"c", "attack"},
-            {"v", "jump"},
-            {"b", "block"}
+            {"z", "attack"},
+            {"x", "jump"},
+            {"c", "block"},
+            {"v", "grab"}
         },
         new Dictionary<string, string>{
             {"up", "up"},
             {"down", "down"},
             {"left", "left"},
             {"right", "right"},
-            {"[", "attack"},
-            {"]", "jump"},
-            {@"\", "block"}
+            {"u", "attack"},
+            {"i", "jump"},
+            {"o", "block"},
+            {"p", "grab"}
         }
     };
 
@@ -62,6 +64,7 @@ public class Player : MonoBehaviour
             {"right", false},
             {"attack", false},
             {"block", false},
+            {"grab", false},
             {"jump", false},
             //composite inputs
             {"upAttack", false},
@@ -77,6 +80,7 @@ public class Player : MonoBehaviour
             {"right", false},
             {"attack", false},
             {"block", false},
+            {"grab", false},
             {"jump", false},
             //composite inputs
             {"upAttack", false},
@@ -98,7 +102,6 @@ public class Player : MonoBehaviour
     
     void Update()
     {
-
         //store keys pressed this frame in inputs[0]
         foreach (string key in controlScheme.Keys) {
             if(Input.GetKey(key)) {
@@ -207,30 +210,31 @@ public class Player : MonoBehaviour
                     //helps players handle excessive momentum
                 }
                 rb.velocity += (Mathf.Abs(rb.velocity.x) < maxSpeed.x ? 1 : 0) * new Vector2((isGrounded ? 1 : 0.5f) * (dirInput == "right" ? 1 : -1) * moveSpeed.x * turnAroundFactor * Time.deltaTime, 0);
-                transform.Find("WalkColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+                transform.Find("Colliders").Find("WalkColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 ChangeAnimationState("walk");
                 if ((sr.flipX && dirInput == "left") || (!sr.flipX && dirInput == "right")) {
                     sr.flipX = !sr.flipX;
-                    foreach(Transform colliderParent in transform) {
+                    foreach(Transform colliderParent in transform.Find("Colliders")) {
                         foreach(Transform frameParent in colliderParent) {
                             foreach(Transform box in frameParent) {
                                 box.GetComponent<BoxCollider2D>().offset = new Vector2(-box.GetComponent<BoxCollider2D>().offset.x, box.GetComponent<BoxCollider2D>().offset.y);
                             }
                         }
                     }
+                    transform.Find("GrabSnap").localPosition = new Vector3(-transform.Find("GrabSnap").localPosition.x, transform.Find("GrabSnap").localPosition.y, 0);
                 }
             } else if (dirInput == "down" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 //crouch maybe? no animation right now, so just go into idle
-                transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+                transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
             } else if (dirInput == "up" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
                 //look up. no animation right now, so just go into idle
-                transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+                transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
             } else if (dirInput == null && (new string[]{null, "idle", "walking"}.Contains(currState))) {
-                transform.Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+                transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
             }
@@ -268,6 +272,8 @@ public class Player : MonoBehaviour
             }
         } else if (actionInput == "block" && new string[]{null, "idle", "walking"}.Contains(currState)) {
             currActionCoroutine = StartCoroutine(Block());
+        } else if (actionInput == "grab" && new string[]{null, "idle", "walking"}.Contains(currState)) {
+            currActionCoroutine = StartCoroutine(Grab());
         }
     }
 
@@ -284,14 +290,14 @@ public class Player : MonoBehaviour
     IEnumerator Block() {
         //enables block collider and hides all other colliders 
         DisableHitHurtBoxes();
-        currState = "block";
+        currState = "blocking";
         stunned = true;
         ChangeAnimationState("block");
-        transform.Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = true;
-        transform.Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
+        transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = true;
+        transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
         yield return new WaitForSeconds(1f);
-        transform.Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
-        transform.Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
+        transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
+        transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         stunned = false;
         currState = null;
     }
@@ -300,24 +306,90 @@ public class Player : MonoBehaviour
         //cancels your block, for when another player hits your block
         StopCoroutine(currActionCoroutine);
         currActionCoroutine = null;
-        transform.Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
-        transform.Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
+        transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
+        transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         stunned = false;
         currState = null;
     }
 
-    void DisableHitHurtBoxes() {
-        /*disables all hit and hurt boxes, effectively making the player invincible and unable to deal damage. used by block
-        because it does NOT DISABLE BLOCK HITBOX*/
-        foreach(Transform colliderParent in transform) {
-            foreach(Transform frameParent in colliderParent) {
-                foreach(Transform box in frameParent) {
-                    if (box.tag == "Hitbox" || box.tag == "Hurtbox") {
-                        box.GetComponent<BoxCollider2D>().enabled = false;
+    public IEnumerator Grab() {
+        //disables own hitboxes and enables special grab hitbox
+        DisableHitBoxes();
+        currState = "grabbing";
+        //ChangeAnimationState("grab");
+        transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
+        yield return new WaitForSeconds(1.2f);
+        transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
+        currState = null;
+    }
+
+    void EndGrab() {
+        if (currActionCoroutine != null) {
+            StopCoroutine(currActionCoroutine);
+        }
+        transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
+        currState = null;
+    }
+
+    public IEnumerator Throw(){
+        //called on player that grabbed the other player
+        currState = "throwing";
+        gameManager.players[playerNumber ? 0 : 1].transform.position = transform.Find("GrabSnap").position;
+        gameManager.players[playerNumber ? 0 : 1].rb.velocity = Vector3.zero;
+        yield return new WaitForSeconds(0.1f);
+        //prevent player from pre-inputting by accident
+        float grabTimeout = 1f;
+        while (grabTimeout > 0) {
+            gameManager.players[playerNumber ? 0 : 1].transform.position = transform.Find("GrabSnap").position;
+            if (actionInput != null) {
+                gameManager.players[playerNumber ? 0 : 1].EndThrown();
+                StopCoroutine(currActionCoroutine);
+                break;
+            }
+            if (dirInput != null) {
+                if ((sr.flipX && dirInput == "left") || (!sr.flipX && dirInput == "right")) {
+                    foreach (Player pl in gameManager.players) {
+                        pl.sr.flipX = !pl.sr.flipX;
+                        foreach(Transform colliderParent in pl.transform.Find("Colliders")) {
+                            foreach(Transform frameParent in colliderParent) {
+                                foreach(Transform box in frameParent) {
+                                    box.GetComponent<BoxCollider2D>().offset = new Vector2(-box.GetComponent<BoxCollider2D>().offset.x, box.GetComponent<BoxCollider2D>().offset.y);
+                                }
+                            }
+                        }
+                        transform.Find("GrabSnap").localPosition = new Vector3(-transform.Find("GrabSnap").localPosition.x, transform.Find("GrabSnap").localPosition.y, 0);
                     }
+                    gameManager.players[playerNumber ? 0 : 1].transform.position = new Vector3(transform.position.x + -(gameManager.players[playerNumber ? 0 : 1].transform.position.x - transform.position.x), gameManager.players[playerNumber ? 0 : 1].transform.position.y, 0);
+                    gameManager.players[playerNumber ? 0 : 1].EndThrown();
+                    break;
                 }
             }
+            yield return null;
+            grabTimeout -= Time.deltaTime;
         }
+        if (grabTimeout <= 0) {
+            currState = null;
+            gameManager.players[playerNumber ? 0 : 1].stunned = false;
+            gameManager.players[playerNumber ? 0 : 1].currState = null;
+        }
+        //ChangeAnimationState("Throw");
+        yield return new WaitForSeconds(0.2f);
+        EndGrab();
+    }
+
+    public void BeginThrown() {
+        //called on the player being grabbed
+        DisableHitHurtBoxes();
+        if (currState == "blocking") {
+            EndBlock();
+        }
+        stunned = true;
+        currState = "thrown";
+    }
+
+    public void EndThrown() {
+        AttackData grabAttackData = new AttackData(30, 0.3f, false, gameManager.players[playerNumber ? 1 : 0], AttackData.attackIdFlow++);
+        TakeDamage(grabAttackData, (transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position) / 2);
     }
 
     //All of these just toggle hitboxes for the frames of an attack
@@ -325,13 +397,13 @@ public class Player : MonoBehaviour
         currState = "attacking";
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame1 = transform.Find("SideAttackColliders").Find("Frame1");
+        Transform frame1 = transform.Find("Colliders").Find("SideAttackColliders").Find("Frame1");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
         ChangeAnimationState("side_attack");
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame2 = transform.Find("SideAttackColliders").Find("Frame2");
+        Transform frame2 = transform.Find("Colliders").Find("SideAttackColliders").Find("Frame2");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = false;
         frame2.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
@@ -348,13 +420,13 @@ public class Player : MonoBehaviour
         currState = "attacking";
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame1 = transform.Find("UpAttackColliders").Find("Frame1");
+        Transform frame1 = transform.Find("Colliders").Find("UpAttackColliders").Find("Frame1");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
         ChangeAnimationState("up_attack");
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame2 = transform.Find("UpAttackColliders").Find("Frame2");
+        Transform frame2 = transform.Find("Colliders").Find("UpAttackColliders").Find("Frame2");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = false;
         frame2.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
@@ -371,13 +443,13 @@ public class Player : MonoBehaviour
         currState = "attacking";
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame1 = transform.Find("UpAirAttackColliders").Find("Frame1");
+        Transform frame1 = transform.Find("Colliders").Find("UpAirAttackColliders").Find("Frame1");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
         ChangeAnimationState("up_air_attack");
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame2 = transform.Find("UpAirAttackColliders").Find("Frame2");
+        Transform frame2 = transform.Find("Colliders").Find("UpAirAttackColliders").Find("Frame2");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = false;
         frame2.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
@@ -394,13 +466,13 @@ public class Player : MonoBehaviour
         currState = "attacking";
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame1 = transform.Find("DownAirAttackColliders").Find("Frame1");
+        Transform frame1 = transform.Find("Colliders").Find("DownAirAttackColliders").Find("Frame1");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
         ChangeAnimationState("down_air_attack");
         yield return new WaitForSeconds(0.15f);
 
-        Transform frame2 = transform.Find("DownAirAttackColliders").Find("Frame2");
+        Transform frame2 = transform.Find("Colliders").Find("DownAirAttackColliders").Find("Frame2");
         frame1.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
         frame1.Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = false;
         frame2.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = true;
@@ -416,6 +488,10 @@ public class Player : MonoBehaviour
     public void TakeDamage(AttackData aD, Vector3 contactPoint) {
         //called by hitboxes when they contact a hurtbox, adds invlun to attack instances and calls HitStunAndLaunch
         if ((!damagedBy.Contains(aD.damageInst)) && (aD.multiHit || !attackedBy.Contains(aD.attackId))) {
+            stunned = true;
+            currState = "hurt";
+            DisableHitBoxes();
+            ChangeAnimationState("hurt");
             //Vector3 forceVec = ((Vector3)transform.position - contactPoint).normalized;
             Vector3 forceVec = ((Vector3)transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position).normalized;
             percent += aD.damage;
@@ -431,10 +507,6 @@ public class Player : MonoBehaviour
     public IEnumerator HitStunAndLaunch(float mag, AttackData ad, Vector3 forceVec) {
         //called when you take damage, makes you get stunned, shake a lil and then get launched
         Vector3 originPos = transform.position;
-        //forcefully change player state to be stunned
-        stunned = true;
-        currState = "hurt";
-        ChangeAnimationState("hurt");
         if (currActionCoroutine != null) {
             StopCoroutine(currActionCoroutine);
             currActionCoroutine = null;
@@ -450,6 +522,39 @@ public class Player : MonoBehaviour
         currState = null;
     }
 
+    void DisableHitHurtBoxes() {
+        if (currActionCoroutine != null) {
+            StopCoroutine(currActionCoroutine);
+        }
+        /*disables all hit and hurt boxes, effectively making the player invincible and unable to deal damage. used by block
+        because it does NOT DISABLE BLOCK HITBOX*/
+        foreach(Transform colliderParent in transform.Find("Colliders")) {
+            foreach(Transform frameParent in colliderParent) {
+                foreach(Transform box in frameParent) {
+                    if (box.tag == "Hitbox" || box.tag == "Hurtbox") {
+                        box.GetComponent<BoxCollider2D>().enabled = false;
+                    }
+                }
+            }
+        }
+    }
+
+    void DisableHitBoxes() {
+        if (currActionCoroutine != null) {
+            StopCoroutine(currActionCoroutine);
+        }
+        /*disables all hit boxes, effectively making the player unable to deal damage. used when player is hit*/
+        foreach(Transform colliderParent in transform.Find("Colliders")) {
+            foreach(Transform frameParent in colliderParent) {
+                foreach(Transform box in frameParent) {
+                    if (box.tag == "Hitbox") {
+                        box.GetComponent<BoxCollider2D>().enabled = false;
+                    }
+                }
+            }
+        }
+    }
+
     IEnumerator RefreshInvulnById(int damageInst, int attackId) {
         //makes it so that you're invulnerable to a specific instnace of an attack (ex. THAT ONE TIME the player pressed attack) for a lil bit
         yield return new WaitForSeconds(0.1f);
@@ -459,22 +564,22 @@ public class Player : MonoBehaviour
 
     void LoadAttackData() {
         //initializes hitboxes with data about their respective attacks
-        Transform sideAttack = transform.Find("SideAttackColliders");
+        Transform sideAttack = transform.Find("Colliders").Find("SideAttackColliders");
         int sideAttackId = AttackData.attackIdFlow++;
         sideAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, sideAttackId);
         sideAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, sideAttackId);
 
-        Transform upAttack = transform.Find("UpAttackColliders");
+        Transform upAttack = transform.Find("Colliders").Find("UpAttackColliders");
         int upAttackId = AttackData.attackIdFlow++;
         upAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, upAttackId);
         upAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, upAttackId);
 
-        Transform upAirAttack = transform.Find("UpAirAttackColliders");
+        Transform upAirAttack = transform.Find("Colliders").Find("UpAirAttackColliders");
         int upAirAttackId = AttackData.attackIdFlow++;
         upAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, upAirAttackId);
         upAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, upAirAttackId);
 
-        Transform downAirAttack = transform.Find("DownAirAttackColliders");
+        Transform downAirAttack = transform.Find("Colliders").Find("DownAirAttackColliders");
         int downAirAttackId = AttackData.attackIdFlow++;
         downAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(10f, 0.1f, true, this, downAirAttackId);
         downAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.1f, true, this, downAirAttackId);

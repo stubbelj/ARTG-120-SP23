@@ -8,6 +8,8 @@ TagManager:
   - Hurtbox
   - DeathBox
   - BlockHurtbox
+  - Hitbox
+  - GrabHitbox
   layers:
   - Default
   - TransparentFX
