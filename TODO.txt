@@ -1,3 +1,5 @@
-make all hitboxes relative to the center!!!!!!
-finish block
-finish grab
+4 step jump
+crouching
+look up
+hurt anim plays twice after player has been hit once this round
+new controls
