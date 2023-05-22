@@ -10,6 +10,7 @@ TagManager:
   - BlockHurtbox
   - Hitbox
   - GrabHitbox
+  - Ground
   layers:
   - Default
   - TransparentFX
@@ -18,8 +19,8 @@ TagManager:
   - Water
   - UI
   - Player
-  - 
-  - 
+  - Ground
+  - GroundCast
   - 
   - 
   - 

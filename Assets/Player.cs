@@ -9,6 +9,7 @@ public class Player : MonoBehaviour
     Vector2 moveSpeed = new Vector2(100, 100);
     Vector2 maxSpeed = new Vector2(15f, 15f);
     float jumpForce = 1100f;
+    [SerializeField]
     bool isGrounded = false;
     int jumps = 0;
     bool playerNumber;
@@ -32,17 +33,20 @@ public class Player : MonoBehaviour
     public SpriteRenderer sr;
     Rigidbody2D rb;
     Dictionary<string, string> controlScheme;
-    Dictionary<string, string>[] controlSchemeData = new Dictionary<string, string>[]{
+    bool controlSchemeController = false;
+    public static Dictionary<string, string>[] controlSchemeData = new Dictionary<string, string>[]{
+        //keyboard 1
         new Dictionary<string, string>{
             {"w", "up"},
             {"s", "down"},
             {"a", "left"},
             {"d", "right"},
-            {"z", "attack"},
-            {"x", "jump"},
-            {"c", "block"},
-            {"v", "grab"}
+            {"v", "attack"},
+            {"b", "jump"},
+            {"n", "block"},
+            {"m", "grab"}
         },
+        //keyboard 2
         new Dictionary<string, string>{
             {"up", "up"},
             {"down", "down"},
@@ -52,10 +56,22 @@ public class Player : MonoBehaviour
             {"i", "jump"},
             {"o", "block"},
             {"p", "grab"}
+        },
+        //controller inputs for verti/horiz are mapped differently and don't use dict values
+        //xbox controller
+        new Dictionary<string, string>{
+            {"Vertical_Xbox", "up"},
+            {"Horizontal_Xbox", "left"},
+            {"Attack_Xbox", "attack"},
+            {"Jump_Xbox", "jump"},
+            {"Block_Xbox", "block"},
+            {"Grab_Xbox", "grab"}
         }
     };
+    public static int[] activeControlSchemes = new int[2];
 
     Dictionary<string, bool>[] inputs = new Dictionary<string, bool>[]{
+        //player 1
         new Dictionary<string, bool>{
             //single inputs
             {"up", false},
@@ -72,6 +88,7 @@ public class Player : MonoBehaviour
             {"leftAttack", false},
             {"rightAttack", false},
         },
+        //player 2
         new Dictionary<string, bool>{
             //single inputs
             {"up", false},
@@ -90,8 +107,7 @@ public class Player : MonoBehaviour
         }
     };
     
-    void Awake()
-    {
+    void Awake() {
         gameManager = GameManager.inst;
         sr = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
@@ -100,21 +116,80 @@ public class Player : MonoBehaviour
         LoadAttackData();
     }
     
-    void Update()
-    {
+    void Update() {
 
-        //store keys pressed this frame in inputs[0]
-        foreach (string key in controlScheme.Keys) {
-            if(Input.GetKey(key)) {
-                inputs[0][controlScheme[key]] = true;
+        if (controlSchemeController) {
+            if (Input.GetAxis("Vertical_Xbox") == -1) {
+                inputs[0]["up"] = true;
+            } else if (Input.GetAxis("Vertical_Xbox") == 1) {
+                inputs[0]["down"] = true;
             } else {
-                inputs[0][controlScheme[key]] = false;
+                inputs[0]["up"] = false;
+                inputs[0]["down"] = false;
+            }
+            if (Input.GetAxis("Horizontal_Xbox") == 1) {
+                inputs[0]["right"] = true;
+            } else if (Input.GetAxis("Horizontal_Xbox") == -1) {
+                inputs[0]["left"] = true;
+            } else {
+                inputs[0]["right"] = false;
+                inputs[0]["left"] = false;
+            }
+
+            if (Input.GetButtonDown("Attack_Xbox")) {
+                inputs[0]["attack"] = true;
+            } else {
+                inputs[0]["attack"] = false;
+            }
+            if (Input.GetButtonDown("Jump_Xbox")) {
+                inputs[0]["jump"] = true;
+            } else {
+                inputs[0]["jump"] = false;
+            }
+            if (Input.GetButtonDown("Block_Xbox")) {
+                inputs[0]["block"] = true;
+            } else {
+                inputs[0]["block"] = false;
+            }
+            if (Input.GetButtonDown("Grab_Xbox")) {
+                inputs[0]["grab"] = true;
+            } else {
+                inputs[0]["grab"] = false;
+            }
+        } else {
+            //store keys pressed this frame in inputs[0]
+            foreach (string key in controlScheme.Keys) {
+                if(Input.GetKey(key)) {
+                    inputs[0][controlScheme[key]] = true;
+                } else {
+                    inputs[0][controlScheme[key]] = false;
+                }
             }
         }
+        
+
 
         ReduceInputs();
 
         ExecuteInputs();
+
+        Collider2D groundCastOverlap = Physics2D.OverlapBox(transform.position + new Vector3(0, -2, 0), new Vector2(1, 3), 0, LayerMask.GetMask("Ground"));
+        if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y)) < 5f)) {
+            isGrounded = true;
+            if (jumps != 1 && currState != "jumpTakeoff" && currState != "jumpRising" && currState != "jumpFalling") {
+                jumps = 1;
+            }
+            if(currState == "jumpFalling") {
+                currState = "jumpLanding";
+                StartCoroutine(JumpLanding());
+            }
+        } else {
+            isGrounded = false;
+            if (rb.velocity.y < -0.5f && new string[]{null, "jumpRising", "idle", "walking", "lookUp", "crouch"}.Contains(currState)) {
+                currState = "jumpFalling";
+                ChangeAnimationState("jumpFalling");
+            }
+        }
 
         //rb.velocity = new Vector3(Mathf.Clamp(rb.velocity.x, -maxSpeed.x, maxSpeed.x), Mathf.Clamp(rb.velocity.y, -maxSpeed.y, maxSpeed.y), 0);
 
@@ -203,7 +278,7 @@ public class Player : MonoBehaviour
         /*have the player perform actions based on the (reduced) input*/
         if (actionInput == null) {
             //player is walking
-            if ((dirInput == "left" || dirInput == "right") && (new string[]{null, "idle", "walking"}.Contains(currState))) {
+            if ((dirInput == "left" || dirInput == "right") && (new string[]{null, "idle", "walking", "lookUp", "crouch"}.Contains(currState))) {
                 currState = "walking";
                 float turnAroundFactor = 1;
                 if ((dirInput == "right" && rb.velocity.x < 0) || (dirInput == "left" && rb.velocity.x > 0)) {
@@ -224,23 +299,49 @@ public class Player : MonoBehaviour
                     }
                     transform.Find("GrabSnap").localPosition = new Vector3(-transform.Find("GrabSnap").localPosition.x, transform.Find("GrabSnap").localPosition.y, 0);
                 }
-            } else if (dirInput == "down" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
-                //crouch maybe? no animation right now, so just go into idle
+            } else if (rb.velocity.y < -0.5f && !isGrounded && (new string[]{null, "idle", "walk", "jumpRising"}.Contains(currState))) {
+                //falling
+                currState = "jumpFalling";
+                transform.Find("Colliders").Find("JumpFallingColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+                ChangeAnimationState("jumpFalling");
+            } else if (dirInput == "down" && isGrounded && (new string[]{null, "idle", "walking", "crouch"}.Contains(currState))) {
+                //crouch
                 transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
-                currState = "idle";
-                ChangeAnimationState("idle");
-            } else if (dirInput == "up" && (new string[]{null, "idle", "walking"}.Contains(currState))) {
-                //look up. no animation right now, so just go into idle
+                currState = "crouch";
+                ChangeAnimationState("crouch");
+            } else if (dirInput == "up" && isGrounded && (new string[]{null, "idle", "walking", "lookUp"}.Contains(currState))) {
+                //look up
                 transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
-                currState = "idle";
-                ChangeAnimationState("idle");
-            } else if (dirInput == null && (new string[]{null, "idle", "walking"}.Contains(currState))) {
+                currState = "lookUp";
+                ChangeAnimationState("lookUp");
+            } else if (dirInput == null && (new string[]{null, "idle", "walking", "lookUp", "crouch"}.Contains(currState))) {
                 transform.Find("Colliders").Find("IdleColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
                 currState = "idle";
                 ChangeAnimationState("idle");
             }
 
-        } else if (actionInput == "attack" && new string[]{null, "idle", "walking"}.Contains(currState)) {
+            if ((dirInput == "left" || dirInput == "right") && !isGrounded) {
+                //turning midAir
+                float turnAroundFactor = 1;
+                if ((dirInput == "right" && rb.velocity.x < 0) || (dirInput == "left" && rb.velocity.x > 0)) {
+                    turnAroundFactor *= 2;
+                    //helps players handle excessive momentum
+                }
+                rb.velocity += (Mathf.Abs(rb.velocity.x) < maxSpeed.x ? 1 : 0) * new Vector2((isGrounded ? 1 : 0.5f) * (dirInput == "right" ? 1 : -1) * moveSpeed.x * turnAroundFactor * Time.deltaTime, 0);
+                if ((sr.flipX && dirInput == "right") || (!sr.flipX && dirInput == "left")) {
+                    sr.flipX = !sr.flipX;
+                    foreach(Transform colliderParent in transform.Find("Colliders")) {
+                        foreach(Transform frameParent in colliderParent) {
+                            foreach(Transform box in frameParent) {
+                                box.GetComponent<BoxCollider2D>().offset = new Vector2(-box.GetComponent<BoxCollider2D>().offset.x, box.GetComponent<BoxCollider2D>().offset.y);
+                            }
+                        }
+                    }
+                    transform.Find("GrabSnap").localPosition = new Vector3(-transform.Find("GrabSnap").localPosition.x, transform.Find("GrabSnap").localPosition.y, 0);
+                }
+            }
+
+        } else if (actionInput == "attack" && new string[]{null, "idle", "walking", "jumpTakeoff", "jumpRising", "jumpFalling"}.Contains(currState)) {
             if (isGrounded) {
                 if (dirInput == "left" || dirInput == "right") {
                     //side and neutral attacks are the same right now
@@ -267,25 +368,69 @@ public class Player : MonoBehaviour
             }
         } else if (actionInput == "jump") {
             if (jumps > 0) {
-                currActionCoroutine = StartCoroutine(ForceOverTime(new Vector3(0, jumpForce, 0), 0.1f));
-                isGrounded = false;
                 jumps--;
+                currState = "jumping";
+                StartCoroutine(Jump());
             }
         } else if (actionInput == "block" && new string[]{null, "idle", "walking"}.Contains(currState)) {
             currActionCoroutine = StartCoroutine(Block());
         } else if (actionInput == "grab" && new string[]{null, "idle", "walking"}.Contains(currState)) {
             currActionCoroutine = StartCoroutine(Grab());
+        } else if (actionInput == "attack" && new string[]{null, "lookUp", "crouch"}.Contains(currState)) {
+            if (currState == "lookUp" && dirInput == "up") {
+                currActionCoroutine = StartCoroutine(UpAttack());
+            } else if (currState == "crouch" && dirInput == "down") {
+                currActionCoroutine = StartCoroutine(DownAttack());
+            }
         }
     }
 
     public void OnTriggerEnter2D(Collider2D col) {
         //just for platforming and death box
-        if (col.gameObject.tag == "Stage" && isGrounded == false) {
-            isGrounded = true;
-            jumps = 1;
-        } else if (col.gameObject.tag == "DeathBox") {
+        /*if (col.gameObject.tag == "Ground" && isGrounded == false) {
+            Collider2D groundCastOverlap = Physics2D.OverlapBox(transform.position + new Vector3(0, -2, 0), new Vector2(1, 3), 0, LayerMask.GetMask("Ground"));
+            if (groundCastOverlap) {
+                if (groundCastOverlap.gameObject.tag == "Ground") {
+                    isGrounded = true;
+                    jumps = 1;
+                    if (currState == "jumpFalling") {
+                        currState = "jumpLanding";
+                        StartCoroutine(JumpLanding());
+                    }
+                }
+            }
+        } else */
+        if (col.gameObject.tag == "DeathBox") {
             Die();
         }
+    }
+
+    public void OnTriggerExit2D(Collider2D col) {
+        if (col.gameObject.tag == "Ground" && isGrounded) {
+            //isGrounded = false;
+            //currState = "jumpFalling";
+            //ChangeAnimationState("jumpFalling");
+        }
+    }
+
+    bool jumpLock = false;
+    IEnumerator Jump() {
+        if (!jumpLock) {
+            jumpLock = true;
+            transform.Find("Colliders").Find("JumpTakeoffColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+            ChangeAnimationState("jumpTakeoff");
+            StartCoroutine(ForceOverTime(new Vector3(0, jumpForce, 0), 0.1f));
+            yield return new WaitForSeconds(0.1f);
+            currState = "jumpRising";
+            jumpLock = false;
+        }
+    }
+
+    IEnumerator JumpLanding() {
+        transform.Find("Colliders").Find("JumpLandingColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
+        ChangeAnimationState("jumpLanding");
+        yield return new WaitForSeconds(0.1f);
+        currState = null;
     }
 
     IEnumerator Block() {
@@ -507,7 +652,7 @@ public class Player : MonoBehaviour
 
     IEnumerator UpAirAttack() {
         currState = "attacking";
-        ChangeAnimationState("up_air_attack");
+        ChangeAnimationState("upAir");
         yield return new WaitForSeconds(0.3f / 8);
 
         Transform prevFrame = null;
@@ -543,7 +688,7 @@ public class Player : MonoBehaviour
 
     IEnumerator DownAirAttack() {
         currState = "attacking";
-        ChangeAnimationState("down_air_attack");
+        ChangeAnimationState("downAir");
         yield return new WaitForSeconds(0.3f / 8);
 
         Transform prevFrame = null;
@@ -693,17 +838,40 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void Init(bool newPlayerNumber, int newControlScheme, TMP_Text newPercentText) {
+    public void Init(bool newPlayerNumber, int newControlScheme, TMP_Text newPercentText, bool isUsingController) {
         //initializer bc monobehaviours don't really get constructors and Start() isn't safe
         playerNumber = newPlayerNumber;
         controlScheme = controlSchemeData[newControlScheme];
         percentText = newPercentText;
+        controlSchemeController = isUsingController;
+
+        EnablePerks();
+    }
+
+    void EnablePerks() {
+        foreach(string perkName in gameManager.playerPerks[playerNumber ? 1 : 0]) {
+            switch(perkName) {
+                case "superSpeed":
+                    //print("enabled super speed for player " + (playerNumber ? 1 : 0));
+                    moveSpeed *= 2;
+                    maxSpeed *= 2;
+                    break;
+                case "heavyAttacks":
+                    //print("enabled heavy attacks for player " + (playerNumber ? 1 : 0));
+                    break;
+                case "blinkAttacks":
+                    //print("enabled blink attacks for player " + (playerNumber ? 1 : 0));
+                    break;
+                default:
+                    //print("Attempted to enable perk with invalid name " + perkName + " in EnablePerks()");
+                    break;
+            }
+        }
     }
 
     void Die() {
-        //destroy self and ask gameManager to reset the game
+        //ask gameManager to reset the game
         gameManager.AwardPoint(!playerNumber);
-        Destroy(gameObject);
     }
 
     public bool AnimatorIsPlaying() {
@@ -721,9 +889,56 @@ public class Player : MonoBehaviour
         newState += playerNumber ? "_p2" : "_p1";
         /*play an animation!*/
         if (currAnimState == newState) return;
-        //felt really smart writing this until i realized that it's not safe across threads
         anim.Play(newState);
         currAnimState = newState;
+    }
+
+    //some utils
+
+    void VisualBoxCast2D(Vector2 origin, Vector2 size, float angle, Vector2 direction, float distance) {
+        Vector2 p1, p2, p3, p4, p5, p6, p7, p8;
+        float w = size.x * 0.5f;
+        float h = size.y * 0.5f;
+        p1 = new Vector2(-w, h);
+        p2 = new Vector2(w, h);
+        p3 = new Vector2(w, -h);
+        p4 = new Vector2(-w, -h);
+
+        Quaternion q = Quaternion.AngleAxis(angle, new Vector3(0, 0, 1));
+        p1 = q * p1;
+        p2 = q * p2;
+        p3 = q * p3;
+        p4 = q * p4;
+
+        p1 += origin;
+        p2 += origin;
+        p3 += origin;
+        p4 += origin;
+
+        Vector2 realDistance = direction.normalized * distance;
+        p5 = p1 + realDistance;
+        p6 = p2 + realDistance;
+        p7 = p3 + realDistance;
+        p8 = p4 + realDistance;
+
+
+        //Drawing the cast
+        //Color castColor = hit ? Color.red : Color.green;
+        Color castColor = Color.red;
+        Debug.DrawLine(p1, p2, castColor, 10);
+        Debug.DrawLine(p2, p3, castColor, 10);
+        Debug.DrawLine(p3, p4, castColor, 10);
+        Debug.DrawLine(p4, p1, castColor, 10);
+
+        Debug.DrawLine(p5, p6, castColor, 10);
+        Debug.DrawLine(p6, p7, castColor, 10);
+        Debug.DrawLine(p7, p8, castColor, 10);
+        Debug.DrawLine(p8, p5, castColor, 10);
+
+        Debug.DrawLine(p1, p5, Color.grey, 10);
+        Debug.DrawLine(p2, p6, Color.grey, 10);
+        Debug.DrawLine(p3, p7, Color.grey, 10);
+        Debug.DrawLine(p4, p8, Color.grey, 10);
     }
 
 }
