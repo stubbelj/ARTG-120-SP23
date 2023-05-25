@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     [SerializeField]
     bool isGrounded = false;
     int jumps = 0;
+    int recoveries = 0;
     bool playerNumber;
     float percent = 0;
     bool stunned = false;
@@ -175,16 +176,13 @@ public class Player : MonoBehaviour
         ExecuteInputs();
 
         Collider2D groundCastOverlap = Physics2D.OverlapBox(transform.position + new Vector3(0, -2, 0), new Vector2(1, 3), 0, LayerMask.GetMask("Ground"));
-        if (!playerNumber) {
-            print(transform.position.y);
-            print(groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y  +groundCastOverlap.offset.y);
-        }
 
         if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y + groundCastOverlap.offset.y)) < 1.9f)) {
             isGrounded = true;
             if (jumps != 1 && currState != "jumpTakeoff" && currState != "jumpRising" && currState != "jumpFalling") {
                 jumps = 1;
             }
+            recoveries = 1;
             if(currState == "jumpFalling") {
                 currState = "jumpLanding";
                 StartCoroutine(JumpLanding());
@@ -363,7 +361,10 @@ public class Player : MonoBehaviour
                     //side and neutral attacks are the same right now
                     currActionCoroutine = StartCoroutine(SideAttack());
                 } else if (dirInput == "up") {
-                    currActionCoroutine = StartCoroutine(UpAirAttack());
+                    if (recoveries > 0) {
+                        recoveries--;
+                        currActionCoroutine = StartCoroutine(UpAirAttack());
+                    }
                 } else if (dirInput == "down") {
                     currActionCoroutine = StartCoroutine(DownAirAttack());
                 } else if (dirInput == null) {
@@ -657,6 +658,7 @@ public class Player : MonoBehaviour
     IEnumerator UpAirAttack() {
         currState = "attacking";
         ChangeAnimationState("upAir");
+        StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
         yield return new WaitForSeconds(0.3f / 8);
 
         Transform prevFrame = null;
@@ -729,7 +731,6 @@ public class Player : MonoBehaviour
     public void TakeDamage(AttackData aD, Vector3 contactPoint) {
         //called by hitboxes when they contact a hurtbox, adds invlun to attack instances and calls HitStunAndLaunch
         if ((!damagedBy.Contains(aD.damageInst)) && (aD.multiHit || !attackedBy.Contains(aD.attackId))) {
-            print("TakeDamage()");
             stunned = true;
             currState = "hurt";
             DisableHitBoxes();
@@ -761,25 +762,23 @@ public class Player : MonoBehaviour
         rb.velocity = Vector3.zero;
         //rb.AddForce(forceVec);
         //StartCoroutine(KnockbackFriction(5f));
-        StartCoroutine(SimpleLaunch(ad, forceVec));
+        StartCoroutine(SimpleLaunch(ad.launchAngle, forceVec));
         stunned = false;
     }
 
-    public IEnumerator SimpleLaunch(AttackData ad, Vector3 forceVec) {
+    public IEnumerator SimpleLaunch(float launchAngle, Vector3 forceVec) {
         //different launch for each attack
         float mag = forceVec.magnitude;
         float fx = forceVec.x;
         float fy = forceVec.y;
-        float angle = ad.launchAngle;
+        float angle = launchAngle;
 
         //change angle of launch based on ad.launchAngle
         if(fx >= 0 && fy <= 0) {
-            //print("lower right");
             //lower right quadrant
             fx = Mathf.Abs(Mathf.Sin(angle) * mag);
             fy = -Mathf.Abs(Mathf.Cos(angle) * mag);
         } else if(fx <= 0 && fy <= 0) {
-            //print("lower left");
             //lower left quadrant
             fx = -Mathf.Abs(Mathf.Sin(angle) * mag);
             fy = -Mathf.Abs(Mathf.Cos(angle) * mag);
@@ -790,16 +789,18 @@ public class Player : MonoBehaviour
             fy *= -1;
         }
 
-        //print(fx);
-        //print(fy);
-
         //apply force
         float launchDir = fx < 0 ? -1 : 1;
+        rb.velocity = Vector3.zero;
         rb.AddForce(new Vector3(fx, fy, 0));
+        float dfy = 0;
+        //creates exponentially decreasing velocity
         while (rb.velocity.y > 0f) {
+            print(fy);
             rb.AddForce(new Vector3(fx, fy, 0));
             fx += launchDir * Time.deltaTime;
-            fy += Time.deltaTime * 2;
+            fy -= Time.deltaTime * dfy;
+            dfy++;
             yield return 0;
         }
         
