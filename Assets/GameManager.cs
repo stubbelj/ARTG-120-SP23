@@ -51,10 +51,11 @@ public class GameManager : MonoBehaviour
     }
 
     public void AwardPoint(bool playerNum) {
-        if (!awardingPoint) {
+        /*if (!awardingPoint) {
             awardingPoint = true;
             StartCoroutine(AwardPointWrapped(playerNum));
-        }
+        }*/
+        EndGame();
     }
 
     public IEnumerator AwardPointWrapped(bool playerNum) {

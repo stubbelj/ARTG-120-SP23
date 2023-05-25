@@ -8,7 +8,8 @@ public class Player : MonoBehaviour
 {
     Vector2 moveSpeed = new Vector2(100, 100);
     Vector2 maxSpeed = new Vector2(15f, 15f);
-    float jumpForce = 1100f;
+    float friction = 1f;
+    float jumpForce = 1400f;
     [SerializeField]
     bool isGrounded = false;
     int jumps = 0;
@@ -174,7 +175,12 @@ public class Player : MonoBehaviour
         ExecuteInputs();
 
         Collider2D groundCastOverlap = Physics2D.OverlapBox(transform.position + new Vector3(0, -2, 0), new Vector2(1, 3), 0, LayerMask.GetMask("Ground"));
-        if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y)) < 5f)) {
+        if (!playerNumber) {
+            print(transform.position.y);
+            print(groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y  +groundCastOverlap.offset.y);
+        }
+
+        if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y + groundCastOverlap.offset.y)) < 1.9f)) {
             isGrounded = true;
             if (jumps != 1 && currState != "jumpTakeoff" && currState != "jumpRising" && currState != "jumpFalling") {
                 jumps = 1;
@@ -190,8 +196,6 @@ public class Player : MonoBehaviour
                 ChangeAnimationState("jumpFalling");
             }
         }
-
-        //rb.velocity = new Vector3(Mathf.Clamp(rb.velocity.x, -maxSpeed.x, maxSpeed.x), Mathf.Clamp(rb.velocity.y, -maxSpeed.y, maxSpeed.y), 0);
 
         //save input from this frame
         inputs[1] = inputs[0];
@@ -212,18 +216,20 @@ public class Player : MonoBehaviour
         dirInput = null;
         actionInput = null;
         List<string> dirKeys = new List<string>(inputs[0].Keys.ToList().GetRange(0, 4));
-        List<bool> dirVals = new List<bool>(inputs[0].Values.ToList().GetRange(0, 4));
         List<string> actionKeys = new List<string>(inputs[0].Keys.ToList().GetRange(4, inputs[0].Count - 4));
         List<bool> actionVals = new List<bool>(inputs[0].Values.ToList().GetRange(4, inputs[0].Count - 4));
         //reduce directional inputs down to a single directional input
+        //
+        
+        
         if (((List<bool>)inputs[0].Values.ToList().GetRange(0, 4)).Count(x => x) > 1) {
             //colliding dir inputs exist
-            for (int i = 0; i < 4; i++) {
+            /*for (int i = 0; i < 4; i++) {
                 if (dirVals[i] && inputs[1][dirKeys[i]]) {
                     //overlapping old inputs, erase from new inputs
                     inputs[0][dirKeys[i]] = false;
                 }
-            }
+            }*/
             //keep one of the dir inputs - they might still be colliding
             /*probably doesn't matter if some inputs hold precedence, but i selected the input to keep randomly anyway
             List<string> inputsToRemove = new List<string>{"up", "down", "left", "right"};
@@ -231,14 +237,12 @@ public class Player : MonoBehaviour
             foreach (string inputName in inputsToRemove) {
                 inputs[0][inputName] = false;
             }*/
-            List<string> inputsToRemove = new List<string>{"up", "down", "left", "right"};
+
             if (inputs[0]["up"]) {
                 inputs[0]["down"] = inputs[0]["left"] = inputs[0]["right"] = false;
-            }
-            else if (inputs[0]["down"]) {
+            } else if (inputs[0]["down"]) {
                 inputs[0]["up"] = inputs[0]["left"] = inputs[0]["right"] = false;
-            }
-            else if (inputs[0]["left"]) {
+            } else if (inputs[0]["left"]) {
                 inputs[0]["down"] = inputs[0]["up"] = inputs[0]["right"] = false;
             } else {
                 inputs[0]["down"] = inputs[0]["left"] = inputs[0]["up"] = false;
@@ -246,7 +250,7 @@ public class Player : MonoBehaviour
         }
 
         for (int i = 0; i < 4; i++) {
-            if (dirVals[i]) {dirInput = dirKeys[i];}
+            if (inputs[0].Values.ToList().GetRange(0, 4)[i]) {dirInput = dirKeys[i];}
         }
         //value that's actually being used in this implementation
 
@@ -261,7 +265,7 @@ public class Player : MonoBehaviour
             }
             //keep one of the action inputs - they might still be colliding
             //probably doesn't matter if some inputs hold precedence, but i selected the input to keep randomly anyway
-            List<string> inputsToRemove = new List<string>{"attack", "block"};
+            List<string> inputsToRemove = new List<string>{"attack", "block", "grab", "jump"};
             inputsToRemove.RemoveAt(gameManager.rand.Next(0, 2));
             foreach (string inputName in inputsToRemove) {
                 inputs[0][inputName] = false;
@@ -483,7 +487,7 @@ public class Player : MonoBehaviour
         gameManager.players[playerNumber ? 0 : 1].transform.position = transform.Find("GrabSnap").position;
         gameManager.players[playerNumber ? 0 : 1].sr.flipX = gameManager.players[playerNumber ? 0 : 1].transform.position.x > transform.position.x ? true : false;
         gameManager.players[playerNumber ? 0 : 1].rb.velocity = Vector3.zero;
-        yield return new WaitForSeconds(0.05f);
+        yield return new WaitForSeconds(0.1f);
         //prevent player from pre-inputting by accident
         float grabTimeout = 3f;
         while (grabTimeout > 0) {
@@ -536,7 +540,7 @@ public class Player : MonoBehaviour
     }
 
     public void EndThrown() {
-        AttackData grabAttackData = new AttackData(7, 0.0f, false, gameManager.players[playerNumber ? 1 : 0], AttackData.attackIdFlow++);
+        AttackData grabAttackData = new AttackData(10, 0.0f, false, 1.22f, gameManager.players[playerNumber ? 1 : 0], AttackData.attackIdFlow++);
         TakeDamage(grabAttackData, (transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position) / 2);
     }
 
@@ -725,6 +729,7 @@ public class Player : MonoBehaviour
     public void TakeDamage(AttackData aD, Vector3 contactPoint) {
         //called by hitboxes when they contact a hurtbox, adds invlun to attack instances and calls HitStunAndLaunch
         if ((!damagedBy.Contains(aD.damageInst)) && (aD.multiHit || !attackedBy.Contains(aD.attackId))) {
+            print("TakeDamage()");
             stunned = true;
             currState = "hurt";
             DisableHitBoxes();
@@ -733,7 +738,7 @@ public class Player : MonoBehaviour
             Vector3 forceVec = ((Vector3)transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position).normalized;
             percent += aD.damage;
             percentText.text = percent.ToString();
-            forceVec *= aD.damage * percent * 75f;
+            forceVec *= aD.damage * (350 + percent * 2);
             StartCoroutine(HitStunAndLaunch(0.1f, aD, forceVec));
         }
         damagedBy.Add(aD.damageInst);
@@ -754,9 +759,64 @@ public class Player : MonoBehaviour
             yield return new WaitForSeconds(Time.deltaTime);
         }
         rb.velocity = Vector3.zero;
-        rb.AddForce(forceVec);
+        //rb.AddForce(forceVec);
+        //StartCoroutine(KnockbackFriction(5f));
+        StartCoroutine(SimpleLaunch(ad, forceVec));
         stunned = false;
+    }
+
+    public IEnumerator SimpleLaunch(AttackData ad, Vector3 forceVec) {
+        //different launch for each attack
+        float mag = forceVec.magnitude;
+        float fx = forceVec.x;
+        float fy = forceVec.y;
+        float angle = ad.launchAngle;
+
+        //change angle of launch based on ad.launchAngle
+        if(fx >= 0 && fy <= 0) {
+            //print("lower right");
+            //lower right quadrant
+            fx = Mathf.Abs(Mathf.Sin(angle) * mag);
+            fy = -Mathf.Abs(Mathf.Cos(angle) * mag);
+        } else if(fx <= 0 && fy <= 0) {
+            //print("lower left");
+            //lower left quadrant
+            fx = -Mathf.Abs(Mathf.Sin(angle) * mag);
+            fy = -Mathf.Abs(Mathf.Cos(angle) * mag);
+        }
+
+        //if player is grounded, make them launch up
+        if (isGrounded && fy < 0) {
+            fy *= -1;
+        }
+
+        //print(fx);
+        //print(fy);
+
+        //apply force
+        float launchDir = fx < 0 ? -1 : 1;
+        rb.AddForce(new Vector3(fx, fy, 0));
+        while (rb.velocity.y > 0f) {
+            rb.AddForce(new Vector3(fx, fy, 0));
+            fx += launchDir * Time.deltaTime;
+            fy += Time.deltaTime * 2;
+            yield return 0;
+        }
+        
+        rb.velocity = new Vector3(rb.velocity.x, 0, 0);
         currState = null;
+    }
+
+    public IEnumerator KnockbackFriction(float time) {
+        while (time > 0 && !isGrounded) {
+            if (rb.velocity.x > 0) {
+                rb.velocity -= new Vector2(0.05f * friction, 0);
+            } else if (rb.velocity.x < 0) {
+                rb.velocity += new Vector2(0.05f * friction, 0);
+            }
+            yield return 0;
+            time -= Time.deltaTime;
+        }
     }
 
     void DisableHitHurtBoxes() {
@@ -803,30 +863,30 @@ public class Player : MonoBehaviour
         //initializes hitboxes with data about their respective attacks
         Transform sideAttack = transform.Find("Colliders").Find("SideAttackColliders");
         int sideAttackId = AttackData.attackIdFlow++;
-        sideAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, sideAttackId);
-        sideAttack.Find("Frame5").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, this, sideAttackId);
+        sideAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, false, 0.52f, this, sideAttackId);
+        sideAttack.Find("Frame5").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(5f, 0.15f, false, 0.52f, this, sideAttackId);
 
         Transform upAttack = transform.Find("Colliders").Find("UpAttackColliders");
         int upAttackId = AttackData.attackIdFlow++;
-        upAttack.Find("Frame3").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, upAttackId);
-        upAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, upAttackId);
-        upAttack.Find("Frame5").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, this, upAttackId);
+        upAttack.Find("Frame3").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(2f, 0.15f, true, 1.22f, this, upAttackId);
+        upAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, 1.22f, this, upAttackId);
+        upAttack.Find("Frame5").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(5f, 0.15f, true, 1.22f, this, upAttackId);
 
         Transform downAttack = transform.Find("Colliders").Find("DownAttackColliders");
         int downAttackId = AttackData.attackIdFlow++;
-        downAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, downAttackId);
-        downAttack.Find("Frame3").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, downAttackId);
-        downAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, this, downAttackId);
+        downAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(2f, 0.15f, true, 0.17f, this, downAttackId);
+        downAttack.Find("Frame3").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, 0.17f, this, downAttackId);
+        downAttack.Find("Frame4").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(5f, 0.15f, true, 0.17f, this, downAttackId);
 
         Transform upAirAttack = transform.Find("Colliders").Find("UpAirAttackColliders");
         int upAirAttackId = AttackData.attackIdFlow++;
-        upAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, upAirAttackId);
-        upAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, this, upAirAttackId);
+        upAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, 1.57f, this, upAirAttackId);
+        upAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(7f, 0.15f, true, 1.57f, this, upAirAttackId);
 
         Transform downAirAttack = transform.Find("Colliders").Find("DownAirAttackColliders");
         int downAirAttackId = AttackData.attackIdFlow++;
-        downAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(1f, 0.15f, true, this, downAirAttackId);
-        downAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, this, downAirAttackId);
+        downAirAttack.Find("Frame1").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(3f, 0.15f, true, 0f, this, downAirAttackId);
+        downAirAttack.Find("Frame2").Find("Hitbox").GetComponent<Hitbox>().attackData = new AttackData(7f, 0.15f, true, 0f, this, downAirAttackId);
     }
 
     IEnumerator ForceOverTime(Vector3 force, float time) {
@@ -852,18 +912,14 @@ public class Player : MonoBehaviour
         foreach(string perkName in gameManager.playerPerks[playerNumber ? 1 : 0]) {
             switch(perkName) {
                 case "superSpeed":
-                    //print("enabled super speed for player " + (playerNumber ? 1 : 0));
                     moveSpeed *= 2;
                     maxSpeed *= 2;
                     break;
                 case "heavyAttacks":
-                    //print("enabled heavy attacks for player " + (playerNumber ? 1 : 0));
                     break;
                 case "blinkAttacks":
-                    //print("enabled blink attacks for player " + (playerNumber ? 1 : 0));
                     break;
                 default:
-                    //print("Attempted to enable perk with invalid name " + perkName + " in EnablePerks()");
                     break;
             }
         }
