@@ -558,7 +558,7 @@ public class Player : MonoBehaviour
     }
 
     public void EndThrown() {
-        AttackData grabAttackData = new AttackData(10, 0.0f, false, 1.22f, gameManager.players[playerNumber ? 1 : 0], AttackData.attackIdFlow++);
+        AttackData grabAttackData = new AttackData(4, 0.0f, false, 1.22f, gameManager.players[playerNumber ? 1 : 0], AttackData.attackIdFlow++);
         TakeDamage(grabAttackData, (transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position) / 2);
     }
 

@@ -2016,6 +2016,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783818461ab643847b6ad5c22dfc46c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  p1Scheme: 0
+  p2Scheme: 2
   playerPrefab: {fileID: 6570738906464552141, guid: 028a50a95ae93044bb8a14743b49da2c, type: 3}
   playerSpawnPoints:
   - {fileID: 1991542613}
