@@ -441,7 +441,7 @@ public class Player : MonoBehaviour
             transform.Find("Colliders").Find("JumpTakeoffColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
             ChangeAnimationState("jumpTakeoff");
             StartCoroutine(ForceOverTime(new Vector3(0, jumpForce, 0), 0.1f));
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.125f);
             currState = "jumpRising";
             jumpLock = false;
         }
@@ -450,7 +450,7 @@ public class Player : MonoBehaviour
     IEnumerator JumpLanding() {
         transform.Find("Colliders").Find("JumpLandingColliders").Find("Frame0").Find("Hurtbox").GetComponent<BoxCollider2D>().enabled = true;
         ChangeAnimationState("jumpLanding");
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.083f);
         currState = null;
     }
 
@@ -463,7 +463,7 @@ public class Player : MonoBehaviour
         ChangeAnimationState("block");
         transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = true;
         transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(.3f);
         transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
         transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         stunned = false;
@@ -486,7 +486,7 @@ public class Player : MonoBehaviour
         currState = "grabbing";
         ChangeAnimationState("grab");
         transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.208f);
         transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         currState = null;
     }
@@ -567,7 +567,7 @@ public class Player : MonoBehaviour
         gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("sideSlash");
-        yield return new WaitForSeconds(0.3f / 8);
+        yield return new WaitForSeconds(0.375f / 9);
         
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {
@@ -588,7 +588,7 @@ public class Player : MonoBehaviour
                     }
                 }
             }
-            yield return new WaitForSeconds(0.3f / 8);
+            yield return new WaitForSeconds(0.375f / 9);
         }
         if (prevFrame.Find("Hitbox") != null) {
                 prevFrame.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
@@ -605,7 +605,7 @@ public class Player : MonoBehaviour
         gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("downSlash");
-        yield return new WaitForSeconds(0.3f / 8);
+        yield return new WaitForSeconds(0.208f / 8);
         
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {
@@ -626,7 +626,7 @@ public class Player : MonoBehaviour
                     }
                 }
             }
-            yield return new WaitForSeconds(0.3f / 8);
+            yield return new WaitForSeconds(0.208f / 8);
         }
         if (prevFrame.Find("Hitbox") != null) {
                 prevFrame.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
@@ -663,7 +663,7 @@ public class Player : MonoBehaviour
                     }
                 }
             }
-            yield return new WaitForSeconds(0.3f / 8);
+            yield return new WaitForSeconds(0.375f / 8);
         }
         if (prevFrame.Find("Hitbox") != null) {
                 prevFrame.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
@@ -680,7 +680,7 @@ public class Player : MonoBehaviour
         currState = "attacking";
         ChangeAnimationState("upAir");
         //StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
-        yield return new WaitForSeconds(0.3f / 8);
+        yield return new WaitForSeconds(0.292f / 8);
 
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {
@@ -701,7 +701,7 @@ public class Player : MonoBehaviour
                     }
                 }
             }
-            yield return new WaitForSeconds(0.3f / 8);
+            yield return new WaitForSeconds(0.292f / 8);
         }
         if (prevFrame.Find("Hitbox") != null) {
                 prevFrame.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
@@ -717,7 +717,7 @@ public class Player : MonoBehaviour
         gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("downAir");
-        yield return new WaitForSeconds(0.3f / 8);
+        yield return new WaitForSeconds(0.292f / 8);
 
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {
@@ -738,7 +738,7 @@ public class Player : MonoBehaviour
                     }
                 }
             }
-            yield return new WaitForSeconds(0.3f / 8);
+            yield return new WaitForSeconds(0.292f / 8);
         }
         if (prevFrame.Find("Hitbox") != null) {
                 prevFrame.Find("Hitbox").GetComponent<BoxCollider2D>().enabled = false;
