@@ -602,10 +602,10 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator DownAttack() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("downSlash");
         yield return new WaitForSeconds(0.208f / 8);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {

@@ -155,14 +155,14 @@ public class GameManager : MonoBehaviour
     public IEnumerator EndGame() {
         audioSource.PlayOneShot(audioClips[6], 0.5f);
         yield return new WaitForSeconds(3f);
-        /*Destroy(players[0]);
+        Destroy(players[0]);
         Destroy(players[1]);
         yield return new WaitForSeconds(0.1f);
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
         players[0].Init(true, p1Scheme, percentTexts[1].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
-        players[1].Init(false, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);*/
-        SceneManager.LoadScene("LucaScene");
+        players[1].Init(false, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
+        //SceneManager.LoadScene("LucaScene");
     }
 
     Dictionary<string, string> ReverseDictionary(Dictionary<string, string> originDict) {
