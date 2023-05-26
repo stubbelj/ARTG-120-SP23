@@ -658,7 +658,7 @@ public class Player : MonoBehaviour
     IEnumerator UpAirAttack() {
         currState = "attacking";
         ChangeAnimationState("upAir");
-        StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
+        //StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
         yield return new WaitForSeconds(0.3f / 8);
 
         Transform prevFrame = null;
@@ -800,7 +800,7 @@ public class Player : MonoBehaviour
             rb.AddForce(new Vector3(fx, fy, 0));
             fx += launchDir * Time.deltaTime;
             fy -= Time.deltaTime * dfy;
-            dfy++;
+            dfy += 0.1f;
             yield return 0;
         }
         
