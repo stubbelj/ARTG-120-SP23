@@ -439,6 +439,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator Block() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[5], 0.5f);
         //enables block collider and hides all other colliders 
         DisableHitHurtBoxes();
         currState = "blocking";
@@ -547,6 +548,7 @@ public class Player : MonoBehaviour
 
     //All of these just toggle hitboxes for the frames of an attack
     IEnumerator SideAttack() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("sideSlash");
         yield return new WaitForSeconds(0.3f / 8);
@@ -584,6 +586,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator DownAttack() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("downSlash");
         yield return new WaitForSeconds(0.3f / 8);
@@ -621,6 +624,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator UpAttack() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
 
        ChangeAnimationState("upSlash");
@@ -656,6 +660,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator UpAirAttack() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("upAir");
         //StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
@@ -693,6 +698,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator DownAirAttack() {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
         currState = "attacking";
         ChangeAnimationState("downAir");
         yield return new WaitForSeconds(0.3f / 8);
@@ -748,6 +754,7 @@ public class Player : MonoBehaviour
     }
 
     public IEnumerator HitStunAndLaunch(float mag, AttackData ad, Vector3 forceVec) {
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[4], 0.25f);
         //called when you take damage, makes you get stunned, shake a lil and then get launched
         Vector3 originPos = transform.position;
         if (currActionCoroutine != null) {
