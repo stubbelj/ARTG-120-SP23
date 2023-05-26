@@ -138,6 +138,7 @@ public class Player : MonoBehaviour
             }
 
             if (Input.GetAxis("Vertical_Xbox" + schemeAppend) == -1) {
+                
                 inputs[0]["up"] = true;
             } else if (Input.GetAxis("Vertical_Xbox" + schemeAppend) == 1) {
                 inputs[0]["down"] = true;
@@ -155,21 +156,25 @@ public class Player : MonoBehaviour
             }
 
             if (Input.GetButtonDown("Attack_Xbox" + schemeAppend)) {
+                print("joystick 1");
                 inputs[0]["attack"] = true;
             } else {
                 inputs[0]["attack"] = false;
             }
             if (Input.GetButtonDown("Jump_Xbox" + schemeAppend)) {
+                print("joystick 3");
                 inputs[0]["jump"] = true;
             } else {
                 inputs[0]["jump"] = false;
             }
             if (Input.GetButtonDown("Block_Xbox" + schemeAppend)) {
+                print("joystick 0");
                 inputs[0]["block"] = true;
             } else {
                 inputs[0]["block"] = false;
             }
             if (Input.GetButtonDown("Grab_Xbox" + schemeAppend)) {
+                print("joystick 2");
                 inputs[0]["grab"] = true;
             } else {
                 inputs[0]["grab"] = false;
