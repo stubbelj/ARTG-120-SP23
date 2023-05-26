@@ -7,6 +7,13 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
+    public int p1Scheme = 0;
+    public int p2Scheme = 2;
+    //0 is wasd + vbnm
+    //1 is arrowkeys + uiop
+    //2 is controller 1, works for xbox and playstation
+
+
     public static GameManager inst = null;
     public System.Random rand = new System.Random();
     public GameObject playerPrefab;
@@ -20,6 +27,9 @@ public class GameManager : MonoBehaviour
     public List<string>[] playerPerks = {new List<string>(), new List<string>()};
     GameObject[] perkOptions = new GameObject[3];
     string[] perkOptionsNames = new string[3];
+    public AudioClip[] audioClips;
+    public AudioSource audioSource;
+
     List<string> perkPool = new List<string>{
         "superSpeed", "superSpeed", "superSpeed"
     };
@@ -34,28 +44,35 @@ public class GameManager : MonoBehaviour
         }
 
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
-        players[0].Init(false, 0, percentTexts[0].GetComponent<TMP_Text>(), false);
-        Player.activeControlSchemes[0] = 0;
-        usesController[0] = false;
+        players[0].Init(false, p1Scheme, percentTexts[0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
+        Player.activeControlSchemes[0] = p1Scheme;
+        usesController[0] = p1Scheme == 2 ? true : false;
+
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-        players[1].Init(true, 1, percentTexts[1].GetComponent<TMP_Text>(), true);
-        usesController[1] = true;
-        Player.activeControlSchemes[1] = 2;
+        players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
+        Player.activeControlSchemes[1] = p2Scheme;
+        usesController[1] = p2Scheme == 2 ? true : false;
 
         perkOptions[0] = GameObject.Find("PerkUI").transform.Find("PerkOption0").gameObject;
         perkOptions[1] = GameObject.Find("PerkUI").transform.Find("PerkOption1").gameObject;
         perkOptions[2] = GameObject.Find("PerkUI").transform.Find("PerkOption2").gameObject;
+
+        GameObject.Find("bgMusic").GetComponent<AudioSource>().Play();
     }
 
     void Update() {
     }
 
+    bool endingGame = false;
     public void AwardPoint(bool playerNum) {
         /*if (!awardingPoint) {
             awardingPoint = true;
             StartCoroutine(AwardPointWrapped(playerNum));
         }*/
-        EndGame();
+        if (!endingGame) {
+            endingGame = true;
+            StartCoroutine(EndGame());
+        }
     }
 
     public IEnumerator AwardPointWrapped(bool playerNum) {
@@ -129,13 +146,15 @@ public class GameManager : MonoBehaviour
 
         players[!playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[!playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
         players[playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
-        players[playerNum ? 1 : 0].Init(true, 1, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), true);
-        players[!playerNum ? 1 : 0].Init(false, 0, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), false);
+        players[playerNum ? 1 : 0].Init(true, p1Scheme, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
+        players[!playerNum ? 1 : 0].Init(false, p2Scheme, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         yield return null;
         awardingPoint = false;
     }
 
-    public void EndGame() {
+    public IEnumerator EndGame() {
+        audioSource.PlayOneShot(audioClips[6], 0.5f);
+        yield return new WaitForSeconds(3f);
         SceneManager.LoadScene("LucaScene");
     }
 
