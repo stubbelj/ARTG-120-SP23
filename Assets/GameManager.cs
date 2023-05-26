@@ -7,8 +7,8 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    int p1Scheme = 0;
-    int p2Scheme = 2;
+    public int p1Scheme = 0;
+    public int p2Scheme = 2;
     //0 is wasd + vbnm
     //1 is arrowkeys + uiop
     //2 is controller 1, works for xbox and playstation
@@ -47,10 +47,11 @@ public class GameManager : MonoBehaviour
         players[0].Init(false, p1Scheme, percentTexts[0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         Player.activeControlSchemes[0] = p1Scheme;
         usesController[0] = p1Scheme == 2 ? true : false;
+
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
         players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
-        usesController[1] = p2Scheme == 2 ? true : false;
         Player.activeControlSchemes[1] = p2Scheme;
+        usesController[1] = p2Scheme == 2 ? true : false;
 
         perkOptions[0] = GameObject.Find("PerkUI").transform.Find("PerkOption0").gameObject;
         perkOptions[1] = GameObject.Find("PerkUI").transform.Find("PerkOption1").gameObject;
@@ -145,8 +146,8 @@ public class GameManager : MonoBehaviour
 
         players[!playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[!playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
         players[playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
-        players[playerNum ? 1 : 0].Init(true, 1, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), true);
-        players[!playerNum ? 1 : 0].Init(false, 0, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), false);
+        players[playerNum ? 1 : 0].Init(true, p1Scheme, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
+        players[!playerNum ? 1 : 0].Init(false, p2Scheme, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         yield return null;
         awardingPoint = false;
     }

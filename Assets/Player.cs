@@ -62,12 +62,21 @@ public class Player : MonoBehaviour
         //controller inputs for verti/horiz are mapped differently and don't use dict values
         //xbox controller
         new Dictionary<string, string>{
-            {"Vertical_Xbox", "up"},
-            {"Horizontal_Xbox", "left"},
-            {"Attack_Xbox", "attack"},
-            {"Jump_Xbox", "jump"},
-            {"Block_Xbox", "block"},
-            {"Grab_Xbox", "grab"}
+            {"Vertical_Xbox_1", "up"},
+            {"Horizontal_Xbox_1", "left"},
+            {"Attack_Xbox_1", "attack"},
+            {"Jump_Xbox_1", "jump"},
+            {"Block_Xbox_1", "block"},
+            {"Grab_Xbox_1", "grab"}
+        },
+
+        new Dictionary<string, string>{
+            {"Vertical_Xbox_2", "up"},
+            {"Horizontal_Xbox_2", "left"},
+            {"Attack_Xbox_2", "attack"},
+            {"Jump_Xbox_2", "jump"},
+            {"Block_Xbox_2", "block"},
+            {"Grab_Xbox_2", "grab"}
         }
     };
     public static int[] activeControlSchemes = new int[2];
@@ -121,39 +130,46 @@ public class Player : MonoBehaviour
     void Update() {
 
         if (controlSchemeController) {
-            if (Input.GetAxis("Vertical_Xbox") == -1) {
+            string schemeAppend;
+            if (!playerNumber) {
+                schemeAppend = gameManager.p1Scheme == 2 ? "_1" : "_2";
+            } else {
+                schemeAppend = gameManager.p2Scheme == 2 ? "_1" : "_2";
+            }
+
+            if (Input.GetAxis("Vertical_Xbox" + schemeAppend) == -1) {
                 inputs[0]["up"] = true;
-            } else if (Input.GetAxis("Vertical_Xbox") == 1) {
+            } else if (Input.GetAxis("Vertical_Xbox" + schemeAppend) == 1) {
                 inputs[0]["down"] = true;
             } else {
                 inputs[0]["up"] = false;
                 inputs[0]["down"] = false;
             }
-            if (Input.GetAxis("Horizontal_Xbox") == 1) {
+            if (Input.GetAxis("Horizontal_Xbox" + schemeAppend) == 1) {
                 inputs[0]["right"] = true;
-            } else if (Input.GetAxis("Horizontal_Xbox") == -1) {
+            } else if (Input.GetAxis("Horizontal_Xbox" + schemeAppend) == -1) {
                 inputs[0]["left"] = true;
             } else {
                 inputs[0]["right"] = false;
                 inputs[0]["left"] = false;
             }
 
-            if (Input.GetButtonDown("Attack_Xbox")) {
+            if (Input.GetButtonDown("Attack_Xbox" + schemeAppend)) {
                 inputs[0]["attack"] = true;
             } else {
                 inputs[0]["attack"] = false;
             }
-            if (Input.GetButtonDown("Jump_Xbox")) {
+            if (Input.GetButtonDown("Jump_Xbox" + schemeAppend)) {
                 inputs[0]["jump"] = true;
             } else {
                 inputs[0]["jump"] = false;
             }
-            if (Input.GetButtonDown("Block_Xbox")) {
+            if (Input.GetButtonDown("Block_Xbox" + schemeAppend)) {
                 inputs[0]["block"] = true;
             } else {
                 inputs[0]["block"] = false;
             }
-            if (Input.GetButtonDown("Grab_Xbox")) {
+            if (Input.GetButtonDown("Grab_Xbox" + schemeAppend)) {
                 inputs[0]["grab"] = true;
             } else {
                 inputs[0]["grab"] = false;
@@ -907,6 +923,7 @@ public class Player : MonoBehaviour
     }
 
     public void Init(bool newPlayerNumber, int newControlScheme, TMP_Text newPercentText, bool isUsingController) {
+        print(newControlScheme);
         //initializer bc monobehaviours don't really get constructors and Start() isn't safe
         playerNumber = newPlayerNumber;
         controlScheme = controlSchemeData[newControlScheme];
