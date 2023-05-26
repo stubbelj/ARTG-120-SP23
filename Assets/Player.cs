@@ -43,10 +43,10 @@ public class Player : MonoBehaviour
             {"s", "down"},
             {"a", "left"},
             {"d", "right"},
-            {"v", "attack"},
-            {"b", "jump"},
-            {"n", "block"},
-            {"m", "grab"}
+            {"z", "attack"},
+            {"x", "jump"},
+            {"c", "block"},
+            {"v", "grab"}
         },
         //keyboard 2
         new Dictionary<string, string>{
@@ -54,10 +54,10 @@ public class Player : MonoBehaviour
             {"down", "down"},
             {"left", "left"},
             {"right", "right"},
-            {"u", "attack"},
-            {"i", "jump"},
-            {"o", "block"},
-            {"p", "grab"}
+            {"o", "attack"},
+            {"p", "jump"},
+            {"[", "block"},
+            {"]", "grab"}
         },
         //controller inputs for verti/horiz are mapped differently and don't use dict values
         //xbox controller
@@ -132,9 +132,9 @@ public class Player : MonoBehaviour
         if (controlSchemeController) {
             string schemeAppend;
             if (!playerNumber) {
-                schemeAppend = gameManager.p1Scheme == 2 ? "_1" : "_2";
+                schemeAppend = gameManager.Getp1Scheme() == 2 ? "_1" : "_2";
             } else {
-                schemeAppend = gameManager.p2Scheme == 2 ? "_1" : "_2";
+                schemeAppend = gameManager.Getp2Scheme() == 2 ? "_1" : "_2";
             }
 
             if (Input.GetAxis("Vertical_Xbox" + schemeAppend) == -1) {
