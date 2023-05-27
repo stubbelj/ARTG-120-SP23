@@ -8,7 +8,7 @@ using System.Linq;
 public class GameManager : MonoBehaviour
 {
     int p1Scheme = 0;
-    int p2Scheme = 1;
+    int p2Scheme = 2;
     //0 is wasd + vbnm
     //1 is arrowkeys + uiop
     //2 is controller 1, works for xbox and playstation
@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     public bool[] usesController = new bool[2];
     public List<string>[] playerPerks = {new List<string>(), new List<string>()};
     GameObject[] perkOptions = new GameObject[3];
+    GameObject optionsWindow;
     string[] perkOptionsNames = new string[3];
     public AudioClip[] audioClips;
     public AudioSource audioSource;
@@ -52,11 +53,13 @@ public class GameManager : MonoBehaviour
         }
 
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
+        print("spawned player on awake");
         players[0].Init(false, p1Scheme, percentTexts[0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         Player.activeControlSchemes[0] = p1Scheme;
         usesController[0] = p1Scheme == 2 ? true : false;
 
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
+        print("spawned player on awake");
         players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         Player.activeControlSchemes[1] = p2Scheme;
         usesController[1] = p2Scheme == 2 ? true : false;
@@ -65,10 +68,14 @@ public class GameManager : MonoBehaviour
         perkOptions[1] = GameObject.Find("PerkUI").transform.Find("PerkOption1").gameObject;
         perkOptions[2] = GameObject.Find("PerkUI").transform.Find("PerkOption2").gameObject;
 
-        GameObject.Find("bgMusic").GetComponent<AudioSource>().Play();
+        GameObject.Find("BGMusicSource").GetComponent<AudioSource>().Play();
+        optionsWindow = GameObject.Find("OptionsWindow");
     }
 
     void Update() {
+        if (Input.GetKeyDown("escape")) {
+            ToggleOptions();
+        }
     }
 
     bool endingGame = false;
@@ -154,6 +161,8 @@ public class GameManager : MonoBehaviour
 
         players[!playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[!playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
         players[playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
+        print("spawned player in award point");
+        print("spawned player in award point");
         players[playerNum ? 1 : 0].Init(true, p1Scheme, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         players[!playerNum ? 1 : 0].Init(false, p2Scheme, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         yield return null;
@@ -163,14 +172,17 @@ public class GameManager : MonoBehaviour
     public IEnumerator EndGame() {
         audioSource.PlayOneShot(audioClips[6], 0.5f);
         yield return new WaitForSeconds(3f);
-        /*Destroy(players[0]);
-        Destroy(players[1]);
+        Destroy(players[0].gameObject);
+        Destroy(players[1].gameObject);
         yield return new WaitForSeconds(0.1f);
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-        players[0].Init(true, p1Scheme, percentTexts[1].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
-        players[1].Init(false, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);*/
-        SceneManager.LoadScene("LucaScene");
+        print("spawned player in end game");
+        print("spawned player in end game");
+        players[0].Init(false, p1Scheme, percentTexts[1].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
+        players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
+        //SceneManager.LoadScene("LucaScene");
+        endingGame = false;
     }
 
     Dictionary<string, string> ReverseDictionary(Dictionary<string, string> originDict) {
@@ -181,7 +193,24 @@ public class GameManager : MonoBehaviour
         return tempDict;
     }
 
-    IEnumerator resetControls() {
-        yield return null;
+    void ToggleOptions() {
+        if (Time.timeScale == 1) {
+            Time.timeScale = 0;
+            optionsWindow.SetActive(true);
+        } else {
+            Time.timeScale = 1;
+            optionsWindow.SetActive(false);
+        }
     }
+
+    /*bool recentlyPaused = false;
+    IEnumerator ToggleOptionsBuffer() {
+        recentlyPaused = true;
+        yield return new WaitForSeconds(0.3f);
+        recentlyPaused = false;
+    }*/
+
+    /*public void ControlsButton() {
+
+    }*/
 }
