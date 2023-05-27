@@ -592,7 +592,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.06781771, g: 0.07404101, b: 0.11320752, a: 0}
+  m_BackGroundColor: {r: 0.4245283, g: 0.20225169, b: 0.27219135, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1989,8 +1989,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 783818461ab643847b6ad5c22dfc46c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  p1Scheme: 0
-  p2Scheme: 2
   playerPrefab: {fileID: 6570738906464552141, guid: 028a50a95ae93044bb8a14743b49da2c, type: 3}
   playerSpawnPoints:
   - {fileID: 1991542613}
