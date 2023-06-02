@@ -26,7 +26,7 @@ public class Player : MonoBehaviour
     public string currAnimState;
     //current animation
     public string currState = null;
-    Coroutine currActionCoroutine = null;
+    public Coroutine currActionCoroutine = null;
 
     List<int> attackedBy = new List<int>();
     List<int> damagedBy = new List<int>();
@@ -156,25 +156,21 @@ public class Player : MonoBehaviour
             }
 
             if (Input.GetButtonDown("Attack_Xbox" + schemeAppend)) {
-                print("joystick 1");
                 inputs[0]["attack"] = true;
             } else {
                 inputs[0]["attack"] = false;
             }
             if (Input.GetButtonDown("Jump_Xbox" + schemeAppend)) {
-                print("joystick 3");
                 inputs[0]["jump"] = true;
             } else {
                 inputs[0]["jump"] = false;
             }
             if (Input.GetButtonDown("Block_Xbox" + schemeAppend)) {
-                print("joystick 0");
                 inputs[0]["block"] = true;
             } else {
                 inputs[0]["block"] = false;
             }
             if (Input.GetButtonDown("Grab_Xbox" + schemeAppend)) {
-                print("joystick 2");
                 inputs[0]["grab"] = true;
             } else {
                 inputs[0]["grab"] = false;
@@ -217,7 +213,18 @@ public class Player : MonoBehaviour
         }
 
         //save input from this frame
+        if (!addingOldInputs) {
+            addingOldInputs = true;
+            StartCoroutine(AddOldInputs());
+        }
+    }
+    
+    bool addingOldInputs = false;
+
+    IEnumerator AddOldInputs() {
         inputs[1] = inputs[0];
+        addingOldInputs = false;
+        yield return new WaitForSeconds(0.1f);
     }
 
     void ReduceInputs() {
@@ -232,40 +239,64 @@ public class Player : MonoBehaviour
             return;
         }
 
+        List<bool> newDirVals = new List<bool>(inputs[0].Values.ToList().GetRange(0, 4));
+        //necessary because the old inputs are replaced before this is even done
         dirInput = null;
         actionInput = null;
         List<string> dirKeys = new List<string>(inputs[0].Keys.ToList().GetRange(0, 4));
         List<string> actionKeys = new List<string>(inputs[0].Keys.ToList().GetRange(4, inputs[0].Count - 4));
+        List<bool> dirVals = new List<bool>(inputs[0].Values.ToList().GetRange(0, 4));
         List<bool> actionVals = new List<bool>(inputs[0].Values.ToList().GetRange(4, inputs[0].Count - 4));
         //reduce directional inputs down to a single directional input
         //
         
+        /*if (!playerNumber) {
+            print(inputs[0]["up"]);
+            print(inputs[1]["up"]);
+        }*/
         
         if (((List<bool>)inputs[0].Values.ToList().GetRange(0, 4)).Count(x => x) > 1) {
             //colliding dir inputs exist
-            /*for (int i = 0; i < 4; i++) {
+            /*if (!playerNumber) {
+                print("collisions exist--------------------------------------");
+                print("up: " + inputs[0]["up"]);
+                print("down: " + inputs[0]["down"]);
+                print("left: " + inputs[0]["left"]);
+                print("right: " + inputs[0]["right"]);
+            }*/
+
+            //remove inputs based on old input data
+            for (int i = 0; i < 4; i++) {
+                if (!playerNumber && i == 0) {
+                    print(newDirVals[i]);
+                    print(dirVals[i]);
+                }
                 if (dirVals[i] && inputs[1][dirKeys[i]]) {
                     //overlapping old inputs, erase from new inputs
                     inputs[0][dirKeys[i]] = false;
                 }
-            }*/
-            //keep one of the dir inputs - they might still be colliding
-            /*probably doesn't matter if some inputs hold precedence, but i selected the input to keep randomly anyway
+                if (((List<bool>)inputs[0].Values.ToList().GetRange(0, 4)).Count(x => x) == 1) {
+                    break;
+                    //we only want to remove down to 1 colliding input
+                }
+            }
+
+            //remove random inputs until there is only one left, in case old data wasn't enough to get down to 1 input
             List<string> inputsToRemove = new List<string>{"up", "down", "left", "right"};
-            inputsToRemove.RemoveAt(gameManager.rand.Next(0, 4));
-            foreach (string inputName in inputsToRemove) {
-                inputs[0][inputName] = false;
+            while (((List<bool>)inputs[0].Values.ToList().GetRange(0, 4)).Count(x => x) > 1) {
+                int randIndex = gameManager.rand.Next(0, inputsToRemove.Count);
+                inputs[0][inputsToRemove[randIndex]] = false;
+                inputsToRemove.RemoveAt(randIndex);
+            }
+
+            /*if (!playerNumber) {
+                print("old inputs removed-----------------------------------");
+                print("up: " + inputs[0]["up"]);
+                print("down: " + inputs[0]["down"]);
+                print("left: " + inputs[0]["left"]);
+                print("right: " + inputs[0]["right"]);
             }*/
 
-            if (inputs[0]["up"]) {
-                inputs[0]["down"] = inputs[0]["left"] = inputs[0]["right"] = false;
-            } else if (inputs[0]["down"]) {
-                inputs[0]["up"] = inputs[0]["left"] = inputs[0]["right"] = false;
-            } else if (inputs[0]["left"]) {
-                inputs[0]["down"] = inputs[0]["up"] = inputs[0]["right"] = false;
-            } else {
-                inputs[0]["down"] = inputs[0]["left"] = inputs[0]["up"] = false;
-            }
         }
 
         for (int i = 0; i < 4; i++) {
@@ -553,6 +584,8 @@ public class Player : MonoBehaviour
 
     public void BeginThrown() {
         //called on the player being grabbed
+        StopCoroutine(currActionCoroutine);
+        currActionCoroutine = null;
         DisableHitHurtBoxes();
         ChangeAnimationState("grabbed");
         if (currState == "blocking") {
@@ -824,7 +857,6 @@ public class Player : MonoBehaviour
         float dfy = 0;
         //creates exponentially decreasing velocity
         while (rb.velocity.y > 0f) {
-            print(fy);
             rb.AddForce(new Vector3(fx, fy, 0));
             fx += launchDir * Time.deltaTime;
             fy -= Time.deltaTime * dfy;
@@ -928,7 +960,6 @@ public class Player : MonoBehaviour
     }
 
     public void Init(bool newPlayerNumber, int newControlScheme, TMP_Text newPercentText, bool isUsingController) {
-        print(newControlScheme);
         //initializer bc monobehaviours don't really get constructors and Start() isn't safe
         playerNumber = newPlayerNumber;
         controlScheme = controlSchemeData[newControlScheme];

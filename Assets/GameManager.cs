@@ -53,13 +53,11 @@ public class GameManager : MonoBehaviour
         }
 
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
-        print("spawned player on awake");
         players[0].Init(false, p1Scheme, percentTexts[0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         Player.activeControlSchemes[0] = p1Scheme;
         usesController[0] = p1Scheme == 2 ? true : false;
 
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-        print("spawned player on awake");
         players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         Player.activeControlSchemes[1] = p2Scheme;
         usesController[1] = p2Scheme == 2 ? true : false;
@@ -161,8 +159,6 @@ public class GameManager : MonoBehaviour
 
         players[!playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[!playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
         players[playerNum ? 1 : 0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[playerNum ? 1 : 0].position, Quaternion.identity).GetComponent<Player>();
-        print("spawned player in award point");
-        print("spawned player in award point");
         players[playerNum ? 1 : 0].Init(true, p1Scheme, percentTexts[!playerNum ? 1 : 0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         players[!playerNum ? 1 : 0].Init(false, p2Scheme, percentTexts[playerNum ? 1 : 0].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         yield return null;
@@ -177,8 +173,6 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
-        print("spawned player in end game");
-        print("spawned player in end game");
         players[0].Init(false, p1Scheme, percentTexts[1].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
         //SceneManager.LoadScene("LucaScene");

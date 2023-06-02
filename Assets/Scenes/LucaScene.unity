@@ -1730,7 +1730,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 1.9598465, y: 89.0088}
+  m_Offset: {x: 0.13487625, y: 65.71477}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1741,7 +1741,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 99.201004, y: 3.623703}
+  m_Size: {x: 80.03886, y: 3.3544083}
   m_EdgeRadius: 0
 --- !u!61 &1300333512
 BoxCollider2D:
@@ -1756,7 +1756,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 50.565033, y: 38.58093}
+  m_Offset: {x: 39.082985, y: 28.347715}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1767,7 +1767,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 3.3307953, y: 91.24467}
+  m_Size: {x: 3.7267303, y: 70.778244}
   m_EdgeRadius: 0
 --- !u!61 &1300333513
 BoxCollider2D:
@@ -1782,7 +1782,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -45.777416, y: 38.758728}
+  m_Offset: {x: -38.548386, y: 28.525513}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1793,7 +1793,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 4.288948, y: 91.89894}
+  m_Size: {x: 3.0731812, y: 71.43251}
   m_EdgeRadius: 0
 --- !u!61 &1300333514
 BoxCollider2D:
@@ -1808,7 +1808,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 2.3412704, y: -9.655076}
+  m_Offset: {x: 0.23574257, y: -9.655076}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1819,7 +1819,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 99.94243, y: 4.2886295}
+  m_Size: {x: 81.18939, y: 4.2886295}
   m_EdgeRadius: 0
 --- !u!1 &1452059351
 GameObject:
