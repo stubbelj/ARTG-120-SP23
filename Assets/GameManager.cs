@@ -197,6 +197,30 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    bool camShaking = false;
+    float timer = 0.15f;
+
+    public IEnumerator CamShake() {
+        if (!camShaking) {
+            camShaking = true;
+            timer = 0.15f;
+            while (timer > 0) {
+                Vector3 origin = new Vector3(Camera.main.transform.position.x, Camera.main.transform.position.y, -10);
+                Camera.main.transform.position = new Vector3(origin.x + 0.1f, origin.y + 0.1f, -10);
+                yield return new WaitForSeconds(Time.deltaTime);
+                timer -= Time.deltaTime;
+                Camera.main.transform.position = new Vector3(origin.x, origin.y, -10);
+                Camera.main.transform.position = new Vector3(origin.x - 0.1f, origin.y + 0.1f, -10);
+                yield return new WaitForSeconds(Time.deltaTime);
+                timer -= Time.deltaTime;
+                Camera.main.transform.position = new Vector3(origin.x, origin.y, -10);
+            }
+            camShaking = false;
+        } else {
+            timer += 0.15f;
+        }
+    }
+
     /*bool recentlyPaused = false;
     IEnumerator ToggleOptionsBuffer() {
         recentlyPaused = true;

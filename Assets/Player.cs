@@ -120,6 +120,9 @@ public class Player : MonoBehaviour
     
     void Awake() {
         gameManager = GameManager.inst;
+
+        percentText = gameManager.percentTexts[playerNumber ? 1 : 0].GetComponent<TMP_Text>();
+
         sr = GetComponent<SpriteRenderer>();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
@@ -193,8 +196,10 @@ public class Player : MonoBehaviour
         ExecuteInputs();
 
         Collider2D groundCastOverlap = Physics2D.OverlapBox(transform.position + new Vector3(0, -2, 0), new Vector2(1, 3), 0, LayerMask.GetMask("Ground"));
-
-        if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y + groundCastOverlap.offset.y)) < 1.9f)) {
+        if (groundCastOverlap) {
+            //print(Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y + groundCastOverlap.offset.y)));
+        }
+        if (groundCastOverlap && groundCastOverlap.gameObject.tag == "Ground" && (Mathf.Abs(transform.position.y - (groundCastOverlap.gameObject.transform.position.y + groundCastOverlap.bounds.extents.y + groundCastOverlap.offset.y)) < 5f)) {
             isGrounded = true;
             if (jumps != 1 && currState != "jumpTakeoff" && currState != "jumpRising" && currState != "jumpFalling") {
                 jumps = 1;
@@ -522,7 +527,7 @@ public class Player : MonoBehaviour
         currState = "grabbing";
         ChangeAnimationState("grab");
         transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = true;
-        yield return new WaitForSeconds(0.208f);
+        yield return new WaitForSeconds(0.416f);
         transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         currState = null;
     }
@@ -799,7 +804,7 @@ public class Player : MonoBehaviour
             Vector3 forceVec = ((Vector3)transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position).normalized;
             percent += aD.damage;
             percentText.text = percent.ToString();
-            forceVec *= aD.damage * (350 + percent * 2);
+            forceVec *= 1.5f * aD.damage * (350 + percent * 2);
             StartCoroutine(HitStunAndLaunch(0.1f, aD, forceVec));
         }
         damagedBy.Add(aD.damageInst);
@@ -808,6 +813,7 @@ public class Player : MonoBehaviour
     }
 
     public IEnumerator HitStunAndLaunch(float mag, AttackData ad, Vector3 forceVec) {
+        StartCoroutine(gameManager.CamShake());
         gameManager.audioSource.PlayOneShot(gameManager.audioClips[4], 0.25f);
         //called when you take damage, makes you get stunned, shake a lil and then get launched
         Vector3 originPos = transform.position;
@@ -857,16 +863,16 @@ public class Player : MonoBehaviour
         rb.AddForce(new Vector3(fx, fy, 0));
         float dfy = 0;
         //creates exponentially decreasing velocity
-        while (rb.velocity.y > 0f) {
-            print("beginning of loop fx: " + fx);
-            print("beginning of loop fy: " + fy);
+        while (rb.velocity.y > 0f && !stunned) {
+            //print("beginning of loop fx: " + fx);
+            //print("beginning of loop fy: " + fy);
             rb.AddForce(new Vector3(fx, fy, 0));
             fx += launchDir * Time.deltaTime;
             fy -= Time.deltaTime * dfy;
             print("end of loop fx: " + fx);
             print("end of loop fy: " + fy);
-            dfy += 1f;
-            yield return 0;
+            dfy += 200f * Time.deltaTime;
+            yield return new WaitForSeconds(0.001f);
         }
         
         rb.velocity = new Vector3(rb.velocity.x, 0, 0);
