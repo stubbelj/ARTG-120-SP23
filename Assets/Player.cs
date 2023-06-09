@@ -496,7 +496,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator Block() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[5], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[5], gameManager.soundeffectsVolumeMod);
         //enables block collider and hides all other colliders 
         DisableHitHurtBoxes();
         currState = "blocking";
@@ -607,7 +607,7 @@ public class Player : MonoBehaviour
 
     //All of these just toggle hitboxes for the frames of an attack
     IEnumerator SideAttack() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], gameManager.soundeffectsVolumeMod);
         currState = "attacking";
         ChangeAnimationState("sideSlash");
         yield return new WaitForSeconds(0.375f / 9);
@@ -648,7 +648,7 @@ public class Player : MonoBehaviour
         currState = "attacking";
         ChangeAnimationState("downSlash");
         yield return new WaitForSeconds(0.208f / 8);
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], gameManager.soundeffectsVolumeMod);
         
         Transform prevFrame = null;
         foreach (Transform frame in transform.Find("Colliders").Find("SideAttackColliders")) {
@@ -683,7 +683,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator UpAttack() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], gameManager.soundeffectsVolumeMod);
         currState = "attacking";
 
        ChangeAnimationState("upSlash");
@@ -719,7 +719,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator UpAirAttack() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], gameManager.soundeffectsVolumeMod);
         currState = "attacking";
         ChangeAnimationState("upAir");
         StartCoroutine(SimpleLaunch(0.5f* Mathf.PI, new Vector3(0f * (sr.flipX ? -1 : 1), 30, 0)));
@@ -757,7 +757,7 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator DownAirAttack() {
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], 0.5f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[3], gameManager.soundeffectsVolumeMod);
         currState = "attacking";
         ChangeAnimationState("downAir");
         yield return new WaitForSeconds(0.292f / 8);
@@ -814,7 +814,7 @@ public class Player : MonoBehaviour
 
     public IEnumerator HitStunAndLaunch(float mag, AttackData ad, Vector3 forceVec) {
         StartCoroutine(gameManager.CamShake());
-        gameManager.audioSource.PlayOneShot(gameManager.audioClips[4], 0.25f);
+        gameManager.audioSource.PlayOneShot(gameManager.audioClips[4], gameManager.soundeffectsVolumeMod / 2);
         //called when you take damage, makes you get stunned, shake a lil and then get launched
         Vector3 originPos = transform.position;
         if (currActionCoroutine != null) {
@@ -871,8 +871,9 @@ public class Player : MonoBehaviour
             fy -= Time.deltaTime * dfy;
             print("end of loop fx: " + fx);
             print("end of loop fy: " + fy);
-            dfy += 200f * Time.deltaTime;
-            yield return new WaitForSeconds(0.001f);
+            dfy += 360 * Time.deltaTime;
+            yield return new WaitForSeconds(Time.deltaTime);
+            print(Time.deltaTime);
         }
         
         rb.velocity = new Vector3(rb.velocity.x, 0, 0);

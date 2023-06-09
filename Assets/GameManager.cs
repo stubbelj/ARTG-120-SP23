@@ -7,8 +7,8 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    int p1Scheme = 0;
-    int p2Scheme = 2;
+    public int p1Scheme = 0;
+    public int p2Scheme = 2;
     //0 is wasd + vbnm
     //1 is arrowkeys + uiop
     //2 is controller 1, works for xbox and playstation
@@ -26,10 +26,16 @@ public class GameManager : MonoBehaviour
     public bool[] usesController = new bool[2];
     public List<string>[] playerPerks = {new List<string>(), new List<string>()};
     GameObject[] perkOptions = new GameObject[3];
-    GameObject optionsWindow;
+    public GameObject optionsWindow;
+    GameObject escapeButton;
     string[] perkOptionsNames = new string[3];
     public AudioClip[] audioClips;
     public AudioSource audioSource;
+    public OptionsManager optionsManager;
+    public GameObject closeBG;
+    public GameObject farBG;
+    public float musicVolumeMod;
+    public float soundeffectsVolumeMod;
 
     List<string> perkPool = new List<string>{
         "superSpeed", "superSpeed", "superSpeed"
@@ -67,7 +73,53 @@ public class GameManager : MonoBehaviour
         perkOptions[2] = GameObject.Find("PerkUI").transform.Find("PerkOption2").gameObject;
 
         GameObject.Find("BGMusicSource").GetComponent<AudioSource>().Play();
-        optionsWindow = GameObject.Find("OptionsWindow");
+        escapeButton = GameObject.Find("EscapeButton");
+
+        if (PlayerPrefs.HasKey("p1Scheme")) {
+            p1Scheme = PlayerPrefs.GetInt("p1Scheme");
+            p2Scheme = PlayerPrefs.GetInt("p2Scheme");
+        } else {
+            p1Scheme = 0;
+            p2Scheme = 2;
+            PlayerPrefs.SetInt("p1Scheme", 0);
+            PlayerPrefs.SetInt("p2Scheme", 0);
+        }
+
+        if (PlayerPrefs.HasKey("brightness")) {
+            Screen.brightness = PlayerPrefs.GetFloat("brightness");
+        } else {
+            Screen.brightness = 0.5f;
+            PlayerPrefs.SetFloat("brightness", 0.5f);
+        }
+
+        float tempContrast;
+        if (PlayerPrefs.HasKey("contrast")) {
+            tempContrast = PlayerPrefs.GetFloat("contrast");
+        } else {
+            tempContrast = 0f;
+            PlayerPrefs.SetFloat("contrast", 0f);
+        }
+
+        if (PlayerPrefs.HasKey("musicVolumeMod")) {
+            musicVolumeMod = PlayerPrefs.GetFloat("musicVolumeMod");
+        } else {
+            musicVolumeMod = 0.5f;
+            PlayerPrefs.SetFloat("musicVolumeMod", musicVolumeMod);
+        }
+        optionsManager.musicVolumeMod = musicVolumeMod;
+
+        if (PlayerPrefs.HasKey("soundeffectsVolumeMod")) {
+            soundeffectsVolumeMod = PlayerPrefs.GetFloat("soundeffectsVolumeMod");
+        } else {
+            soundeffectsVolumeMod = 0.5f;
+            PlayerPrefs.SetFloat("soundeffectsVolumeMod", soundeffectsVolumeMod);
+        }
+        optionsManager.soundeffectsVolumeMod = soundeffectsVolumeMod;
+
+        GameObject.Find("BGMusicSource").GetComponent<AudioSource>().volume = musicVolumeMod;
+        Color origin = new Color(1, 1, 1, 1);
+        closeBG.GetComponent<SpriteRenderer>().color = new Color(origin.r - tempContrast, origin.g - tempContrast, origin.b - tempContrast, 1);
+        farBG.GetComponent<SpriteRenderer>().color = new Color(origin.r - tempContrast, origin.g - tempContrast, origin.b - tempContrast, 1);
     }
 
     void Update() {
@@ -188,6 +240,7 @@ public class GameManager : MonoBehaviour
     }
 
     void ToggleOptions() {
+        audioSource.PlayOneShot(audioClips[3], soundeffectsVolumeMod);
         if (Time.timeScale == 1) {
             Time.timeScale = 0;
             optionsWindow.SetActive(true);
