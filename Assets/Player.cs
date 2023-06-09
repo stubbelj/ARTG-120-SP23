@@ -34,8 +34,8 @@ public class Player : MonoBehaviour
     GameManager gameManager;
     public SpriteRenderer sr;
     Rigidbody2D rb;
-    Dictionary<string, string> controlScheme;
-    bool controlSchemeController = false;
+    public Dictionary<string, string> controlScheme;
+    public bool controlSchemeController = false;
     public static Dictionary<string, string>[] controlSchemeData = new Dictionary<string, string>[]{
         //keyboard 1
         new Dictionary<string, string>{
@@ -43,10 +43,10 @@ public class Player : MonoBehaviour
             {"s", "down"},
             {"a", "left"},
             {"d", "right"},
-            {"z", "attack"},
-            {"x", "jump"},
-            {"c", "block"},
-            {"v", "grab"}
+            {"v", "attack"},
+            {"b", "jump"},
+            {"n", "block"},
+            {"m", "grab"}
         },
         //keyboard 2
         new Dictionary<string, string>{
@@ -54,10 +54,10 @@ public class Player : MonoBehaviour
             {"down", "down"},
             {"left", "left"},
             {"right", "right"},
-            {"o", "attack"},
-            {"p", "jump"},
-            {"[", "block"},
-            {"]", "grab"}
+            {"p", "attack"},
+            {"[", "jump"},
+            {"]", "block"},
+            {"\\", "grab"}
         },
         //controller inputs for verti/horiz are mapped differently and don't use dict values
         //xbox controller
@@ -131,6 +131,12 @@ public class Player : MonoBehaviour
     }
     
     void Update() {
+        /*if(!playerNumber) {
+            print("active control scheme: " + activeControlSchemes[0]);
+            print("uses controller: " + gameManager.usesController[0]);
+            print("control scheme controller: " + controlSchemeController);
+            print("control scheme: " + controlScheme);
+        }*/
 
         if (controlSchemeController) {
             string schemeAppend;
@@ -273,8 +279,8 @@ public class Player : MonoBehaviour
             //remove inputs based on old input data
             for (int i = 0; i < 4; i++) {
                 if (!playerNumber && i == 0) {
-                    print(newDirVals[i]);
-                    print(dirVals[i]);
+                    //print(newDirVals[i]);
+                    //print(dirVals[i]);
                 }
                 if (dirVals[i] && inputs[1][dirKeys[i]]) {
                     //overlapping old inputs, erase from new inputs
@@ -834,7 +840,7 @@ public class Player : MonoBehaviour
     }
 
     public IEnumerator SimpleLaunch(float launchAngle, Vector3 forceVec) {
-        print("Simple Launch");
+        //print("Simple Launch");
         //different launch for each attack
         float mag = forceVec.magnitude;
         float fx = forceVec.x;
@@ -869,11 +875,11 @@ public class Player : MonoBehaviour
             rb.AddForce(new Vector3(fx, fy, 0));
             fx += launchDir * Time.deltaTime;
             fy -= Time.deltaTime * dfy;
-            print("end of loop fx: " + fx);
-            print("end of loop fy: " + fy);
+            //print("end of loop fx: " + fx);
+            //print("end of loop fy: " + fy);
             dfy += 360 * Time.deltaTime;
             yield return new WaitForSeconds(Time.deltaTime);
-            print(Time.deltaTime);
+            //print(Time.deltaTime);
         }
         
         rb.velocity = new Vector3(rb.velocity.x, 0, 0);

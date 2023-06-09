@@ -7,8 +7,8 @@ using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
-    public int p1Scheme = 0;
-    public int p2Scheme = 2;
+    public int p1Scheme;
+    public int p2Scheme;
     //0 is wasd + vbnm
     //1 is arrowkeys + uiop
     //2 is controller 1, works for xbox and playstation
@@ -58,6 +58,9 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
 
+        p1Scheme = 0;
+        p2Scheme = 1;
+
         players[0] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[0].position, Quaternion.identity).GetComponent<Player>();
         players[0].Init(false, p1Scheme, percentTexts[0].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         Player.activeControlSchemes[0] = p1Scheme;
@@ -76,14 +79,31 @@ public class GameManager : MonoBehaviour
         escapeButton = GameObject.Find("EscapeButton");
 
         if (PlayerPrefs.HasKey("p1Scheme")) {
+            print("fetched from player prefs!");
             p1Scheme = PlayerPrefs.GetInt("p1Scheme");
             p2Scheme = PlayerPrefs.GetInt("p2Scheme");
         } else {
             p1Scheme = 0;
-            p2Scheme = 2;
+            p2Scheme = 1;
             PlayerPrefs.SetInt("p1Scheme", 0);
-            PlayerPrefs.SetInt("p2Scheme", 0);
+            PlayerPrefs.SetInt("p2Scheme", 1);
         }
+        Player.activeControlSchemes[0] = p1Scheme;
+        usesController[0] = p1Scheme == 2 || p1Scheme == 3 ? true : false;
+        players[0].controlSchemeController = p1Scheme == 2 || p1Scheme == 3 ? true : false;
+        players[0].controlScheme = Player.controlSchemeData[p1Scheme];
+        Player.activeControlSchemes[1] = p2Scheme;
+        usesController[1] = p2Scheme == 2 || p1Scheme == 3 ? true : false;
+        players[1].controlScheme = Player.controlSchemeData[p2Scheme];
+        players[1].controlSchemeController = p1Scheme == 2 || p1Scheme == 3 ? true : false;
+
+        optionsManager.controlsWindow.transform.Find("P1Controls").Find("ControlTitle").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlLabels[p1Scheme];
+        optionsManager.controlsWindow.transform.Find("P1Controls").Find("ControlGuide").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p1Scheme];
+        optionsManager.controlsWindow.transform.Find("P2Controls").Find("ControlTitle").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlLabels[p2Scheme];
+        optionsManager.controlsWindow.transform.Find("P2Controls").Find("ControlGuide").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p2Scheme];
+
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p1ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p1Scheme];
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p2ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p2Scheme];
 
         if (PlayerPrefs.HasKey("brightness")) {
             Screen.brightness = PlayerPrefs.GetFloat("brightness");

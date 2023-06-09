@@ -25,8 +25,8 @@ public class OptionsManager : MonoBehaviour
     GameManager gameManager;
 
     public float contrast = 0f;
-    public float musicVolumeMod = 0f;
-    public float soundeffectsVolumeMod = 0f;
+    public float musicVolumeMod = 0.5f;
+    public float soundeffectsVolumeMod = 0.5f;
 
     // Start is called before the first frame update
     void Start()
@@ -43,6 +43,12 @@ public class OptionsManager : MonoBehaviour
         p1ControlGuide.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p1Scheme];
         p1ControlLabel.GetComponent<SpriteRenderer>().sprite = controlLabels[gameManager.p1Scheme];
         PlayerPrefs.SetInt("p1Scheme", gameManager.p1Scheme);
+        Player.activeControlSchemes[0] = gameManager.p1Scheme;
+        gameManager.usesController[0] = gameManager.p1Scheme == 2 ? true : false;
+        gameManager.players[0].controlScheme = Player.controlSchemeData[gameManager.p1Scheme];
+        gameManager.players[0].controlSchemeController = gameManager.p1Scheme == 2 || gameManager.p1Scheme == 3 ? true : false;
+
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p1ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p1Scheme];
     }
     
     public void P1ToggleControlsRight() {
@@ -53,6 +59,12 @@ public class OptionsManager : MonoBehaviour
         p1ControlGuide.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p1Scheme];
         p1ControlLabel.GetComponent<SpriteRenderer>().sprite = controlLabels[gameManager.p1Scheme];
         PlayerPrefs.SetInt("p1Scheme", gameManager.p1Scheme);
+        Player.activeControlSchemes[0] = gameManager.p1Scheme;
+        gameManager.usesController[0] = gameManager.p1Scheme == 2 ? true : false;
+        gameManager.players[0].controlScheme = Player.controlSchemeData[gameManager.p1Scheme];
+        gameManager.players[0].controlSchemeController = gameManager.p1Scheme == 2 || gameManager.p1Scheme == 3 ? true : false;
+
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p1ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p1Scheme];
     }
 
     public void P2ToggleControlsLeft() {
@@ -63,6 +75,12 @@ public class OptionsManager : MonoBehaviour
         p2ControlGuide.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p2Scheme];
         p2ControlLabel.GetComponent<SpriteRenderer>().sprite = controlLabels[gameManager.p2Scheme];
         PlayerPrefs.SetInt("p2Scheme", gameManager.p2Scheme);
+        Player.activeControlSchemes[1] = gameManager.p2Scheme;
+        gameManager.usesController[1] = gameManager.p2Scheme == 2 ? true : false;
+        gameManager.players[1].controlScheme = Player.controlSchemeData[gameManager.p2Scheme];
+        gameManager.players[1].controlSchemeController = gameManager.p2Scheme == 2 || gameManager.p2Scheme == 3 ? true : false;
+
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p2ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p2Scheme];
     }
     
     public void P2ToggleControlsRight() {
@@ -73,6 +91,12 @@ public class OptionsManager : MonoBehaviour
         p2ControlGuide.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p2Scheme];
         p2ControlLabel.GetComponent<SpriteRenderer>().sprite = controlLabels[gameManager.p2Scheme];
         PlayerPrefs.SetInt("p2Scheme", gameManager.p2Scheme);
+        Player.activeControlSchemes[1] = gameManager.p2Scheme;
+        gameManager.usesController[1] = gameManager.p2Scheme == 2 ? true : false;
+        gameManager.players[1].controlScheme = Player.controlSchemeData[gameManager.p2Scheme];
+        gameManager.players[1].controlSchemeController = gameManager.p2Scheme == 2 || gameManager.p2Scheme == 3 ? true : false;
+
+        GameObject.Find("Stages").transform.Find("Stage1").Find("p2ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = controlGuides[gameManager.p2Scheme];
     }
 
     public void BrightnessToggleLeft() {
@@ -115,6 +139,7 @@ public class OptionsManager : MonoBehaviour
         if (musicVolumeMod > 0) {
             musicVolumeMod -= 0.05f;
             gameManager.musicVolumeMod = musicVolumeMod;
+            GameObject.Find("BGMusicSource").GetComponent<AudioSource>().volume = musicVolumeMod;
         }
     }
 
@@ -122,6 +147,7 @@ public class OptionsManager : MonoBehaviour
         if (musicVolumeMod < 1.0f) {
             musicVolumeMod += 0.05f;
             gameManager.musicVolumeMod = musicVolumeMod;
+            GameObject.Find("BGMusicSource").GetComponent<AudioSource>().volume = musicVolumeMod;
         }
     }
 
