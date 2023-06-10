@@ -26,9 +26,10 @@ public class Hitbox : MonoBehaviour
             if (col.gameObject.tag == "BlockHurtbox" || col.gameObject.tag == "Hurtbox") {
                 if (!throwing) {
                     col.gameObject.GetComponent<Hurtbox>().parentPlayer.BeginThrown();
-                    StopCoroutine(parentPlayer.currActionCoroutine);
-                    parentPlayer.currActionCoroutine = null;
-                    parentPlayer.currActionCoroutine = StartCoroutine(parentPlayer.Throw());
+                    //StopCoroutine(parentPlayer.currActionCoroutine);
+                    //parentPlayer.currActionCoroutine = null;
+                    //parentPlayer.currActionCoroutine = StartCoroutine(parentPlayer.Throw());
+                    parentPlayer.ThrowWrapper();
                     throwing = true;
                     StartCoroutine(ThrowingReset());
                 }
@@ -50,9 +51,10 @@ public class Hitbox : MonoBehaviour
             if (col.gameObject.tag == "BlockHurtbox" || col.gameObject.tag == "Hurtbox") {
                 if (!throwing) {
                     col.gameObject.GetComponent<Hurtbox>().parentPlayer.BeginThrown();
-                    StopCoroutine(parentPlayer.currActionCoroutine);
-                    parentPlayer.currActionCoroutine = null;
-                    parentPlayer.currActionCoroutine = StartCoroutine(parentPlayer.Throw());
+                    //StopCoroutine(parentPlayer.currActionCoroutine);
+                    //parentPlayer.currActionCoroutine = null;
+                    //parentPlayer.currActionCoroutine = StartCoroutine(parentPlayer.Throw());
+                    parentPlayer.ThrowWrapper();
                     throwing = true;
                     StartCoroutine(ThrowingReset());
                 }

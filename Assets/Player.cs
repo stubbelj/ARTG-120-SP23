@@ -519,7 +519,9 @@ public class Player : MonoBehaviour
 
     public void EndBlock() {
         //cancels your block, for when another player hits your block
-        StopCoroutine(currActionCoroutine);
+        if (currActionCoroutine != null) {
+            StopCoroutine(currActionCoroutine);
+        }
         currActionCoroutine = null;
         transform.Find("Colliders").Find("BlockColliders").gameObject.GetComponent<SpriteRenderer>().enabled = false;
         transform.Find("Colliders").Find("BlockColliders").Find("Frame0").Find("BlockHurtbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
@@ -544,6 +546,10 @@ public class Player : MonoBehaviour
         }
         transform.Find("Colliders").Find("GrabColliders").Find("Frame0").Find("GrabHitbox").gameObject.GetComponent<BoxCollider2D>().enabled = false;
         currState = null;
+    }
+
+    public void ThrowWrapper() {
+        currActionCoroutine = StartCoroutine(Throw());
     }
 
     public IEnumerator Throw(){
@@ -580,7 +586,7 @@ public class Player : MonoBehaviour
                     break;
                 }
             }
-            yield return null;
+            yield return new WaitForSeconds(Time.deltaTime);
             grabTimeout -= Time.deltaTime;
         }
         if (grabTimeout <= 0) {
@@ -595,7 +601,9 @@ public class Player : MonoBehaviour
 
     public void BeginThrown() {
         //called on the player being grabbed
-        StopCoroutine(currActionCoroutine);
+        if (currActionCoroutine != null) {
+            StopCoroutine(currActionCoroutine);
+        }
         currActionCoroutine = null;
         DisableHitHurtBoxes();
         ChangeAnimationState("grabbed");
@@ -810,7 +818,7 @@ public class Player : MonoBehaviour
             Vector3 forceVec = ((Vector3)transform.position - gameManager.players[playerNumber ? 0 : 1].transform.position).normalized;
             percent += aD.damage;
             percentText.text = percent.ToString();
-            forceVec *= 1.5f * aD.damage * (350 + percent * 2);
+            forceVec *= 1f * aD.damage * (350 + percent * 2);
             StartCoroutine(HitStunAndLaunch(0.1f, aD, forceVec));
         }
         damagedBy.Add(aD.damageInst);
@@ -865,11 +873,14 @@ public class Player : MonoBehaviour
 
         //apply force
         float launchDir = fx < 0 ? -1 : 1;
-        rb.velocity = new Vector3(rb.velocity.x, 0.01f, 0);
+        rb.velocity = new Vector3(rb.velocity.x, 30f, 0);
         rb.AddForce(new Vector3(fx, fy, 0));
         float dfy = 0;
         //creates exponentially decreasing velocity
+        int i = 0;
         while (rb.velocity.y > 0f && !stunned) {
+            //gameManager.debugText.text = i.ToString();
+            i++;
             //print("beginning of loop fx: " + fx);
             //print("beginning of loop fy: " + fy);
             rb.AddForce(new Vector3(fx, fy, 0));
@@ -878,6 +889,7 @@ public class Player : MonoBehaviour
             //print("end of loop fx: " + fx);
             //print("end of loop fy: " + fy);
             dfy += 360 * Time.deltaTime;
+            //360 for build
             yield return new WaitForSeconds(Time.deltaTime);
             //print(Time.deltaTime);
         }

@@ -25,7 +25,6 @@ public class GameManager : MonoBehaviour
     public Player[] players = new Player[2];
     public bool[] usesController = new bool[2];
     public List<string>[] playerPerks = {new List<string>(), new List<string>()};
-    GameObject[] perkOptions = new GameObject[3];
     public GameObject optionsWindow;
     GameObject escapeButton;
     string[] perkOptionsNames = new string[3];
@@ -36,6 +35,7 @@ public class GameManager : MonoBehaviour
     public GameObject farBG;
     public float musicVolumeMod;
     public float soundeffectsVolumeMod;
+    public TMP_Text debugText;
 
     List<string> perkPool = new List<string>{
         "superSpeed", "superSpeed", "superSpeed"
@@ -71,10 +71,6 @@ public class GameManager : MonoBehaviour
         Player.activeControlSchemes[1] = p2Scheme;
         usesController[1] = p2Scheme == 2 ? true : false;
 
-        perkOptions[0] = GameObject.Find("PerkUI").transform.Find("PerkOption0").gameObject;
-        perkOptions[1] = GameObject.Find("PerkUI").transform.Find("PerkOption1").gameObject;
-        perkOptions[2] = GameObject.Find("PerkUI").transform.Find("PerkOption2").gameObject;
-
         GameObject.Find("BGMusicSource").GetComponent<AudioSource>().Play();
         escapeButton = GameObject.Find("EscapeButton");
 
@@ -104,6 +100,8 @@ public class GameManager : MonoBehaviour
 
         GameObject.Find("Stages").transform.Find("Stage1").Find("p1ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p1Scheme];
         GameObject.Find("Stages").transform.Find("Stage1").Find("p2ControlView").gameObject.GetComponent<SpriteRenderer>().sprite = optionsManager.controlGuides[p2Scheme];
+
+        //debugText = GameObject.Find("debugText").GetComponent<TMP_Text>();
 
         if (PlayerPrefs.HasKey("brightness")) {
             Screen.brightness = PlayerPrefs.GetFloat("brightness");
@@ -179,8 +177,8 @@ public class GameManager : MonoBehaviour
         List<string> tempPool = new List<string>(perkPool);
         for (int i = 0; i < 3; i++) {
             string perkName = tempPool[rand.Next(0, tempPool.Count)];
-            perkOptions[i].GetComponent<TMP_Text>().text = perkName;
-            perkOptionsNames[i] = perkName;
+            //perkOptions[i].GetComponent<TMP_Text>().text = perkName;
+            //perkOptionsNames[i] = perkName;
             tempPool.Remove(perkName);
         }
 
@@ -190,7 +188,7 @@ public class GameManager : MonoBehaviour
             if (usesController[!playerNum ? 1 : 0]) {
                 //controller
                 if (Input.GetButtonDown(inputDictReversed["attack"])) {
-                    playerPerks[!playerNum ? 1 : 0].Add(perkOptionsNames[selectedPerk]);
+                    //playerPerks[!playerNum ? 1 : 0].Add(perkOptionsNames[selectedPerk]);
                     foreach (Transform textBox in GameObject.Find("PerkUI").transform) {
                         textBox.gameObject.GetComponent<TMP_Text>().text = "";
                     }
@@ -209,7 +207,7 @@ public class GameManager : MonoBehaviour
             } else {
                 //keyboard
                 if (Input.GetKey(inputDictReversed["attack"])) {
-                    playerPerks[!playerNum ? 1 : 0].Add(perkOptionsNames[selectedPerk]);
+                    //playerPerks[!playerNum ? 1 : 0].Add(perkOptionsNames[selectedPerk]);
                     foreach (Transform textBox in GameObject.Find("PerkUI").transform) {
                         textBox.gameObject.GetComponent<TMP_Text>().text = "";
                     }
@@ -238,7 +236,7 @@ public class GameManager : MonoBehaviour
     }
 
     public IEnumerator EndGame() {
-        audioSource.PlayOneShot(audioClips[6], 0.5f);
+        audioSource.PlayOneShot(audioClips[6], musicVolumeMod);
         yield return new WaitForSeconds(3f);
         Destroy(players[0].gameObject);
         Destroy(players[1].gameObject);
