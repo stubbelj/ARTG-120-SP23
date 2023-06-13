@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class OptionsManager : MonoBehaviour
 {
+    public bool isTitle = false;
+    
     public GameObject mainWindow;
     public GameObject controlsWindow;
     public GameObject videoWindow;

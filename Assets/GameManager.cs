@@ -36,6 +36,16 @@ public class GameManager : MonoBehaviour
     public float musicVolumeMod;
     public float soundeffectsVolumeMod;
     public TMP_Text debugText;
+    public Sprite[] p1ScoreDisplays = new Sprite[3];
+    public Sprite[] p2ScoreDisplays = new Sprite[3];
+    public GameObject p1ScoreDisplay;
+    public GameObject p2ScoreDisplay;
+    public Sprite[] p1FireWorks = new Sprite[4];
+    public Sprite[] p2FireWorks = new Sprite[4];
+    public GameObject fireWorkPrefab;
+    bool gameWon = false;
+    public GameObject p1WinText;
+    public GameObject p2WinText;
 
     List<string> perkPool = new List<string>{
         "superSpeed", "superSpeed", "superSpeed"
@@ -52,6 +62,8 @@ public class GameManager : MonoBehaviour
     bool awardingPoint = false;
     // Start is called before the first frame update
     void Awake() {
+
+
         if (inst == null) {
             inst = this;
         } else {
@@ -75,7 +87,6 @@ public class GameManager : MonoBehaviour
         escapeButton = GameObject.Find("EscapeButton");
 
         if (PlayerPrefs.HasKey("p1Scheme")) {
-            print("fetched from player prefs!");
             p1Scheme = PlayerPrefs.GetInt("p1Scheme");
             p2Scheme = PlayerPrefs.GetInt("p2Scheme");
         } else {
@@ -148,13 +159,10 @@ public class GameManager : MonoBehaviour
 
     bool endingGame = false;
     public void AwardPoint(bool playerNum) {
-        /*if (!awardingPoint) {
-            awardingPoint = true;
-            StartCoroutine(AwardPointWrapped(playerNum));
-        }*/
+
         if (!endingGame) {
             endingGame = true;
-            StartCoroutine(EndGame());
+            StartCoroutine(EndGame(playerNum));
         }
     }
 
@@ -235,7 +243,8 @@ public class GameManager : MonoBehaviour
         awardingPoint = false;
     }
 
-    public IEnumerator EndGame() {
+    public IEnumerator EndGame(bool playerNum) {
+        GameObject.Find("BGMusicSource").GetComponent<AudioSource>().Stop();
         audioSource.PlayOneShot(audioClips[6], musicVolumeMod);
         yield return new WaitForSeconds(3f);
         Destroy(players[0].gameObject);
@@ -245,7 +254,44 @@ public class GameManager : MonoBehaviour
         players[1] = GameObject.Instantiate(playerPrefab, playerSpawnPoints[1].position, Quaternion.identity).GetComponent<Player>();
         players[0].Init(false, p1Scheme, percentTexts[1].GetComponent<TMP_Text>(), p1Scheme == 2 ? true : false);
         players[1].Init(true, p2Scheme, percentTexts[1].GetComponent<TMP_Text>(), p2Scheme == 2 ? true : false);
-        //SceneManager.LoadScene("LucaScene");
+        
+        scores[playerNum ? 1 : 0]++;
+        if (playerNum) {
+            p1ScoreDisplay.GetComponent<SpriteRenderer>().sprite = p1ScoreDisplays[scores[playerNum ? 1 : 0] - 1];
+        } else {
+            p2ScoreDisplay.GetComponent<SpriteRenderer>().sprite = p2ScoreDisplays[scores[playerNum ? 1 : 0] - 1];
+        }
+        if (scores[playerNum ? 1 : 0] == 3) {
+            int count = 0;
+            while (count < 20) {
+                GameObject newFireWork = GameObject.Instantiate(fireWorkPrefab, new Vector3(rand.Next(100) - 50, rand.Next(15) * -1, 0), Quaternion.identity);
+                newFireWork.GetComponent<Firework>().explodeHeight = rand.Next(15) + 27.5f;
+                newFireWork.GetComponent<Firework>().color = playerNum;
+                if (playerNum) {
+                    newFireWork.GetComponent<SpriteRenderer>().sprite = p1FireWorks[0];
+                } else {
+                    newFireWork.GetComponent<SpriteRenderer>().sprite = p2FireWorks[0];
+                }
+                count++;
+            }
+
+            if (!gameWon) {
+                gameWon = true;
+                if (!playerNum) {
+                    p1WinText.SetActive(true);
+                } else {
+                    p2WinText.SetActive(true);
+                }
+            }
+        }
+
+        if (scores[playerNum ? 1 : 0] == 1) {
+            GameObject.Find("BGMusicSource").GetComponent<AudioSource>().clip = audioClips[1];
+        } else if (scores[playerNum ? 1 : 0] == 2) {
+            GameObject.Find("BGMusicSource").GetComponent<AudioSource>().clip = audioClips[2];
+        }
+        GameObject.Find("BGMusicSource").GetComponent<AudioSource>().Play();
+        
         endingGame = false;
     }
 
@@ -263,6 +309,7 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 0;
             optionsWindow.SetActive(true);
         } else {
+            optionsManager.GoBack();
             Time.timeScale = 1;
             optionsWindow.SetActive(false);
         }
